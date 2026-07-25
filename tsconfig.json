@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "src",
+    "paths": {
+      "*": ["*", "shared/*"]
+    },
+    "rootDir": "src",
+    "outDir": "out",
+    "plugins": [
+      {
+        "transform": "rbxts-transformer-flamework"
+      }
+    ],
+    "incremental": true,
+    "tsBuildInfoFile": "out/.tsbuildinfo",
+    "strict": true,
+    "noImplicitAny": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    "noLib": true,
+    "moduleDetection": "force",
+    "moduleResolution": "Node",
+    "typeRoots": [
+      "node_modules/@rbxts",
+      "node_modules/@flamework"
+    ]
+  },
+  "include": ["src/**/*"]
+}

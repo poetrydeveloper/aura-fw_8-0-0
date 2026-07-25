@@ -1,0 +1,24 @@
+# Зависимости и пакеты (Блокируем во всех подпапках проекта)
+node_modules/
+jspm_packages/
+web_modules/
+.npm/
+npm-debug.log*
+
+# Локальные логи и дампы крашей
+*.log
+.eslintcache
+
+# Временные файлы операционных систем и сред разработки
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Временный лог сканирования структуры проекта
+project_structure.txt
