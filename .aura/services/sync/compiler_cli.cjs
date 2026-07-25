@@ -4,7 +4,7 @@ const path = require('path');
 const http = require('http');
 
 // Конфигурация путей на основе твоей выровненной монорепозиторной структуры AURA_7
-const IMMUTABLE_DIR = path.resolve(__dirname, '../../../shells/immutable');
+const IMMUTABLE_DIR = path.resolve(__dirname, '../shells/immutable');
 
 console.log("=== START AURA UNBREAKABLE BASE64 CONVEYOR v14.6 ===");
 console.log(`| TSX Source directory: ${IMMUTABLE_DIR}`);
@@ -20,9 +20,10 @@ if (!fs.existsSync(IMMUTABLE_DIR)) {
  * Извлекает конфигурационные параметры объекта без раздувания кода сторонними парсерами.
  */
 function extractMetaField(content, fieldName, isArray = false) {
+    // Регулярное выражение игнорирует любые переносы строк, табы и пробелы вокруг двоеточия
     const regex = isArray 
-        ? new RegExp(`${fieldName}:\\s*\\[([\\s\\S]*?)\\]`)
-        : new RegExp(`${fieldName}:\\s*["']([^"']+)["']`);
+        ? new RegExp(`${fieldName}\\s*:\\s*\\[([\\s\\S]*?)\\]`)
+        : new RegExp(`${fieldName}\\s*:\\s*["']([^"']+)["']`);
     const match = content.match(regex);
     if (!match) return isArray ? [] : "";
     
@@ -31,6 +32,7 @@ function extractMetaField(content, fieldName, isArray = false) {
     }
     return match[1].trim();
 }
+
 
 /**
  * Функция отправки изолированного Base64-пакета через Nginx шлюз в Docker

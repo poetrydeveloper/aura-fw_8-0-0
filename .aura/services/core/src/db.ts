@@ -29,20 +29,20 @@ class MemgraphDatabase {
     public async initConstraints(): Promise<void> {
         const session: Session = this.driver.session();
         try {
-            // Нативный, бронебойный синтаксис уникальности Memgraph v3+
+            // Нативный, железобетонный синтаксис ограничений уникальности Memgraph v3+
             await session.run(`
-                CREATE UNIQUE INDEX ON :Shell(subject, verb, object);
+                CREATE CONSTRAINT ON (s:Shell) ASSERT s.id IS UNIQUE;
             `);
             console.log('[Memgraph DB] Семантические ограничения уникальности успешно применены.');
         } catch (error: any) {
-            if (!error.message.includes('already exists')) {
+            if (!error.message.includes('already exists') && !error.message.includes('Exists')) {
                 console.error('[Memgraph DB Error] Ошибка создания индексов:', error.message);
             }
         } finally {
             await session.close();
         }
     }
-    /**
+/**
      * Атомарная транзакция: Создание мутации ракушки, AST-кода и перенос ребер графа
      */
     public async syncShellWithMutation(payload: SyncShellFields): Promise<void> {
