@@ -22,3 +22,5 @@ Thumbs.db
 
 # Временный лог сканирования структуры проекта
 project_structure.txt
+package-lock.json
+package-lock.json
