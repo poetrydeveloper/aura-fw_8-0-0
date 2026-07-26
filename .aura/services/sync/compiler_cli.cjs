@@ -17,7 +17,7 @@ if (!fs.existsSync(IMMUTABLE_DIR)) {
 (async () => {
     try {
         // Динамический импорт соседних .js файлов в области видимости Node.js
-        const { parseShellFile } = await import('./shell_parser.js');
+        const { parseShellFile } = await import('./shell_parser2.js');
         const { sendPayloadToGateway } = await import('./network_sender.js');
 
         // ВСЕЯДНЫЙ ФИЛЬТР: Сканируем и .tsx, и .ts файлы ракушек Галактики!

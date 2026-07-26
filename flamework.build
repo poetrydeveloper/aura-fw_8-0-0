@@ -1,0 +1,19 @@
+{
+	"version": 1,
+	"flameworkVersion": "1.3.2",
+	"identifiers": {
+		"aura-roblox-game:out/client/controllers/InputSystem@InputSystem": "client/controllers/InputSystem@InputSystem",
+		"aura-roblox-game:out/server/ecs/systems/CleanerSystem@CleanerSystem": "server/ecs/systems/CleanerSystem@CleanerSystem",
+		"aura-roblox-game:out/server/ecs/systems/CollisionSystem@CollisionSystem": "server/ecs/systems/CollisionSystem@CollisionSystem",
+		"aura-roblox-game:out/server/ecs/systems/GalaxyComponents@GalaxyComponents": "server/ecs/systems/GalaxyComponents@GalaxyComponents",
+		"aura-roblox-game:out/server/ecs/systems/InputSystem@InputSystem": "server/ecs/systems/InputSystem@InputSystem",
+		"aura-roblox-game:out/server/ecs/systems/MovementSystem@MovementSystem": "server/ecs/systems/MovementSystem@MovementSystem",
+		"aura-roblox-game:out/server/ecs/systems/WeaponTimerSystem@WeaponTimerSystem": "server/ecs/systems/WeaponTimerSystem@WeaponTimerSystem",
+		"aura-roblox-game:out/server/systems/CleanerSystem@CleanerSystem": "server/systems/CleanerSystem@CleanerSystem",
+		"aura-roblox-game:out/server/systems/CollisionSystem@CollisionSystem": "server/systems/CollisionSystem@CollisionSystem",
+		"aura-roblox-game:out/server/systems/GalaxyComponents@GalaxyComponents": "server/systems/GalaxyComponents@GalaxyComponents",
+		"aura-roblox-game:out/server/systems/MovementSystem@MovementSystem": "server/systems/MovementSystem@MovementSystem",
+		"aura-roblox-game:out/server/systems/WeaponTimerSystem@WeaponTimerSystem": "server/systems/WeaponTimerSystem@WeaponTimerSystem"
+	},
+	"metadata": {}
+}

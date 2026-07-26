@@ -2,9 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { Project } from 'ts-morph';
 import neo4j, { Driver, Session } from 'neo4j-driver';
-
 import { translateJsxToTs } from './weaver_data/jsx_parser';
-import { generateComponentTypesFile } from './weaver_data/types_generator';
 
 const TARGET_SRC_PATH = path.resolve('/app/src');
 const MAP_PROJECT_DIR = path.resolve('/app/.aura/services/core/dist');
@@ -15,6 +13,40 @@ declare const Vector3: any; declare const CFrame: any;
 declare function warn(...args: any[]): void; declare function print(...args: any[]): void;
 `;
 
+/**
+ * ДЕТЕРМИНИРОВАННЫЙ СБОРЩИК ТИПОВ КОМПОНЕНТОВ ИЗ СЫРОГО ГРАФА v17.1
+ * Принимает сырой текст объекта конфигурации из базы данных и пошагово
+ * собирает из него канонические TypeScript интерфейсы для Flamework/Rojo.
+ */
+function compileComponentTypes(rawAstJson: string): string {
+    let resultTs = `// --- AURA COMPONENTS PASSPORT TYPES v17.1 ---\n\n`;
+    
+    try {
+        // Хирургически изолируем блок components из текстовой строки, превращая её в исполняемый JS
+        const cleanObjText = rawAstJson.replace(/render\s*\(.*?\)\s*\{[\s\S]*?\}/g, "");
+        const evalWrapper = new Function(`return ${cleanObjText};`);
+        const configData = evalWrapper();
+        
+        const componentsObj = configData.components || {};
+        
+        // Поэтапно генерируем интерфейсы «вглубь»
+        for (const [compName, fields] of Object.entries(componentsObj)) {
+            resultTs += `export interface ${compName} {\n`;
+            if (fields && typeof fields === 'object') {
+                for (const [fieldName, fieldType] of Object.entries(fields)) {
+                    resultTs += `    ${fieldName}: ${fieldType};\n`;
+                }
+            }
+            resultTs += `}\n\n`;
+        }
+    } catch (e: any) {
+        resultTs += `// ❌ Ошибка детерминированного парсинга объектов БД: ${e.message}\n`;
+        resultTs += `// Фолбэк на сырой слепок данных:\n/*\n${rawAstJson}\n*/`;
+    }
+    
+    return resultTs;
+}
+
 export class CodeWeaver {
     private driver: Driver;
 
@@ -24,7 +56,7 @@ export class CodeWeaver {
     }
 
     public async weaveProject(): Promise<void> {
-        console.log("=== RUNNING AURA FAST-TRACK STR-WEAVER v15.9 ===");
+        console.log("=== RUNNING AURA AST-DETERMINISTIC WEAVER v17.1 ===");
         const session: Session = this.driver.session();
         const validationProject = new Project({ useInMemoryFileSystem: true });
         const mapProjectData: Record<string, string[]> = {};
@@ -42,15 +74,30 @@ export class CodeWeaver {
 
             const generatedFiles: { virtualPath: string; physicalPath: string }[] = [];
 
+            // БЛОК 1. Декларативная пошаговая сборка типов компонентов (shared/)
             const componentShells = result.records.filter(r => r.get('pattern') === 'Component');
             if (componentShells.length > 0) {
-                const customTarget = componentShells[0]?.get('rojoTarget');
+                const firstRecord = componentShells[0];
+                const customTarget = firstRecord.get('rojoTarget');
                 const targetRelPath = customTarget || "src/shared/components.types.ts";
-                generateComponentTypesFile(validationProject, componentShells, TARGET_SRC_PATH);
-                generatedFiles.push({ virtualPath: "src/shared/components.types.ts", physicalPath: path.resolve('/app', targetRelPath) });
-                componentShells.forEach(r => { if (r.get('id')) mapProjectData[r.get('id')] = [targetRelPath]; });
+                const absPhysicalPath = path.resolve('/app', targetRelPath);
+
+                const rawComponentBody = firstRecord.get('astJson') || "";
+                
+                // Вызываем наш новый пошаговый текстовый компилятор типов!
+                const finalTypesContent = compileComponentTypes(rawComponentBody);
+                
+                validationProject.createSourceFile("src/shared/components.types.ts", finalTypesContent, { overwrite: true });
+                generatedFiles.push({ virtualPath: "src/shared/components.types.ts", physicalPath: absPhysicalPath });
+                
+                if (!mapProjectData[targetRelPath]) mapProjectData[targetRelPath] = [];
+                componentShells.forEach(r => {
+                    const shellId = r.get('id');
+                    if (shellId) mapProjectData[targetRelPath].push(shellId);
+                });
             }
 
+            // БЛОК 2. Группировка СИСТЕМ ЛОГИКИ (Исключаем компоненты на 100%)
             const classBuckets = new Map<string, { pattern: string; side: string; shells: any[] }>();
             const systemShells = result.records.filter(r => r.get('pattern') !== 'Component');
 
@@ -62,15 +109,16 @@ export class CodeWeaver {
                 classBuckets.get(className)!.shells.push(record);
             });
 
+            // Сборка классов систем
             for (const [className, bucket] of classBuckets.entries()) {
-                const rawRojoTarget = bucket.shells[0]?.get('rojoTarget');
+                const firstShell = bucket.shells[0];
+                const rawRojoTarget = firstShell ? firstShell.get('rojoTarget') : null;
                 let targetRelPath = rawRojoTarget || `src/${bucket.pattern === 'ControllerMethod' ? 'client/controllers' : 'server/systems'}/${className}.ts`;
 
                 const virtualPath = `src/virtual_${className}.ts`;
                 const physicalPath = path.resolve('/app', targetRelPath);
                 if (!mapProjectData[targetRelPath]) mapProjectData[targetRelPath] = [];
 
-                // СБОРКА СТРОКОВОГО КАРКАСА КЛАССА
                 let fileContent = `${globalMocksHeader}\nexport class ${className} {\n    constructor() {}\n\n`;
 
                 bucket.shells.forEach(record => {
@@ -78,16 +126,17 @@ export class CodeWeaver {
                     const paramsList = ['ctx: any'];
                     if (bucket.pattern === "MatterSystem") paramsList.push("deltaTime: number");
 
-                    // АППАРАТНАЯ СБОРКА: Подставляем мясо логики и ЖЕСТКО запечатываем закрывающую скобку метода }\n
                     fileContent += `    public ${record.get('methodName')}(${paramsList.join(', ')}): ${record.get('outputType') || 'void'} {\n${compiledBody}\n    }\n\n`;
-                    if (record.get('id')) mapProjectData[targetRelPath].push(record.get('id'));
+                    const shellId = record.get('id');
+                    if (shellId) mapProjectData[targetRelPath].push(shellId);
                 });
 
-                fileContent += "}\n"; // ЖЕСТКО запечатываем закрывающую скобку самого класса
+                fileContent += "}\n";
                 validationProject.createSourceFile(virtualPath, fileContent, { overwrite: true });
                 generatedFiles.push({ virtualPath, physicalPath });
             }
 
+            // Запись готовых файлов на хост Windows
             for (const file of generatedFiles) {
                 const sFile = validationProject.getSourceFile(file.virtualPath);
                 if (sFile) {

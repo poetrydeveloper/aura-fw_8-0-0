@@ -9,7 +9,7 @@ docker compose up -d --build --force-recreate
 docker compose down
 docker compose up -d --build --force-recreate
 
-
+ docker logs aura7_weaver_backend
 
 
 # 1. Жестко останавливаем и уничтожаем контейнеры стека aura-7

@@ -19,7 +19,8 @@ export class CollisionSystem {
                 ctx.world.insert(entityId, ({ radius: 12, force: 300, active: true }));
             }
         }
-
     }
+
+}
 
 }
