@@ -24,109 +24,121 @@ class MemgraphDatabase {
     }
 
     /**
-     * Создает уникальные индексы в Memgraph при старте системы (Защита от дубликатов)
+     * Создает аппаратно защищенное ограничение уникальности по суррогатному ключу uid
+     * НАДЕЖНЫЙ ЦИКЛ ОЖИДАНИЯ ХОЛОДНОГО СТАРТА СУБД (Защита от ECONNREFUSED)
      */
     public async initConstraints(): Promise<void> {
-        const session: Session = this.driver.session();
-        try {
-            // Нативный, железобетонный синтаксис ограничений уникальности Memgraph v3+
-            await session.run(`
-                CREATE CONSTRAINT ON (s:Shell) ASSERT s.id IS UNIQUE;
-            `);
-            console.log('[Memgraph DB] Семантические ограничения уникальности успешно применены.');
-        } catch (error: any) {
-            if (!error.message.includes('already exists') && !error.message.includes('Exists')) {
-                console.error('[Memgraph DB Error] Ошибка создания индексов:', error.message);
+        let connected = false;
+        let retries = 5;
+
+        while (!connected && retries > 0) {
+            const session = this.driver.session();
+            try {
+                // Сносим старые плоские индексы, если они вызывали заторы
+                await session.run(`DROP CONSTRAINT ON (s:Shell) ASSERT s.id IS UNIQUE;`).catch(() => {});
+
+                // Навешиваем абсолютную защиту на уникальный конкатенированный ключ версии!
+                await session.run(`CREATE CONSTRAINT ON (s:Shell) ASSERT s.uid IS UNIQUE;`);
+                console.log('[Memgraph DB] Аппаратная защита уникальности версий (s.uid) успешно активирована.');
+                connected = true;
+            } catch (error: any) {
+                if (error.message.includes('already exists') || error.message.includes('Exists')) {
+                    console.log('[Memgraph DB] Ограничения уникальности uid уже были созданы ранее.');
+                    connected = true;
+                    break;
+                }
+                
+                retries--;
+                console.warn(`[Memgraph DB] Ожидание прогрева графа... Осталось попыток: ${retries}`);
+                if (retries === 0) {
+                    console.error('[Memgraph DB Error] Фатальный сбой: Memgraph не ответил за отведенное время.');
+                    throw error;
+                }
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            } finally {
+                await session.close();
             }
-        } finally {
-            await session.close();
         }
     }
-/**
-     * Атомарная транзакция: Создание мутации ракушки, AST-кода и перенос ребер графа
+    /**
+     * Атомарная транзакция: Создание мутации ракушки, AST-кода и перенос ребер графа (Memgraph Native)
      */
     public async syncShellWithMutation(payload: SyncShellFields): Promise<void> {
         const session: Session = this.driver.session();
-        
         try {
             await session.executeWrite(async (tx) => {
                 const cypherQuery = `
-                    // Ищем старого активного предка (если он есть) по уникальному ID ракушки
+                    // Ищем старого активного предка по уникальному ID ракушки
                     OPTIONAL MATCH (oldS:Shell {id: $shellId, status: "active"})
                     
-                    // Создаем новую ноду ракушки с инкрементом версии и инжекцией метаданных
+                    // Вычисляем следующую версию в графе
+                    WITH oldS, COALESCE(oldS.version, 0) + 1 AS nextVersion
+                    
+                    // СОЗДАЕМ ИММУТАБЕЛЬНУЮ НОДУ ЧЕРЕЗ CREATE С КОН КАТЕНИРОВАННЫМ КЛЮЧОМ UID
                     CREATE (newS:Shell {
-                        id: $shellId,
-                        version: COALESCE(oldS.version, 0) + 1,
+                        id: $shellId, 
+                        version: nextVersion,
+                        uid: $shellId + "_" + toString(nextVersion), // <=== НАШ АППАРАТНЫЙ ЩИТ УНИКАЛЬНОСТИ
                         status: "active",
-                        ast_json: $astJson,
-                        subject: $subject,
-                        verb: $verb,
+                        ast_json: $astJson, 
+                        subject: $subject, 
+                        verb: $verb, 
                         object: $object,
-                        class_name: $className,
+                        class_name: $className, 
                         flamework_pattern: $flameworkPattern,
-                        method_name: $methodName,
+                        method_name: $methodName, 
                         execution_side: $executionSide,
-                        output_type: $outputType,
+                        output_type: $outputType, 
                         synced_at: timestamp()
                     })
                     
-                    // Если предок существовал, прокладываем эволюционное ребро мутации
-                    FOREACH (_ IN CASE WHEN oldS IS NOT NULL THEN ELSE [] END |
+                    WITH oldS, newS
+                    // Эволюционная связь мутации (Ветвление через Memgraph-списки)
+                    FOREACH (_ IN [x IN [oldS] WHERE x IS NOT NULL] | 
                         CREATE (oldS)-[:MUTATED_TO {timestamp: timestamp()}]->(newS)
                     )
                     
                     WITH oldS, newS
-                    // Переносим входящие связи логического порядка [:NEXT] на новую ноду
+                    // Перенос входящих ребер порядка [:NEXT]
                     OPTIONAL MATCH (sender)-[rIn:NEXT]->(oldS)
-                    FOREACH (_ IN CASE WHEN rIn IS NOT NULL THEN ELSE [] END |
-                        CREATE (sender)-[:NEXT]->(newS)
+                    FOREACH (_ IN [x IN [rIn] WHERE x IS NOT NULL] | 
+                        CREATE (sender)-[:NEXT]->(newS) 
                         DELETE rIn
                     )
                     
                     WITH oldS, newS
-                    // Переносим исходящие связи логического порядка [:NEXT] на новую ноду
+                    // Перенос исходящих ребер порядка [:NEXT]
                     OPTIONAL MATCH (oldS)-[rOut:NEXT]->(receiver)
-                    FOREACH (_ IN CASE WHEN rOut IS NOT NULL THEN ELSE [] END |
-                        CREATE (newS)-[:NEXT]->(receiver)
+                    FOREACH (_ IN [x IN [rOut] WHERE x IS NOT NULL] | 
+                        CREATE (newS)-[:NEXT]->(receiver) 
                         DELETE rOut
                     )
                     
                     WITH oldS, newS
-                    // Переносим связи привязки к физическому файлу проекта [:PART_OF]
+                    // Перенос связей привязки к физическому файлу проекта [:PART_OF]
                     OPTIONAL MATCH (oldS)-[rPart:PART_OF]->(f:File)
-                    FOREACH (_ IN CASE WHEN rPart IS NOT NULL THEN ELSE [] END |
-                        CREATE (newS)-[:PART_OF {order: rPart.order}]->(f)
+                    FOREACH (_ IN [x IN [rPart] WHERE x IS NOT NULL] | 
+                        CREATE (newS)-[:PART_OF {order: rPart.order}]->(f) 
                         DELETE rPart
                     )
                     
-                    // Переводим старого предка в архивный карантин депрекации
-                    FOREACH (_ IN CASE WHEN oldS IS NOT NULL THEN ELSE [] END |
+                    WITH oldS
+                    // Депрекация старого предка в архивный карантин
+                    FOREACH (_ IN [x IN [oldS] WHERE x IS NOT NULL] | 
                         SET oldS.status = "deprecated", oldS.deprecated_at = timestamp()
                     )
                 `;
-
                 await tx.run(cypherQuery, {
-                    shellId: payload.shell_id,
-                    subject: payload.subject,
-                    verb: payload.verb,
-                    object: payload.object,
-                    astJson: payload.ast_json,
-                    className: payload.class_name,
-                    flameworkPattern: payload.flamework_pattern,
-                    methodName: payload.method_name,
-                    executionSide: payload.execution_side,
-                    outputType: payload.output_type
+                    shellId: payload.shell_id, subject: payload.subject, verb: payload.verb, object: payload.object,
+                    astJson: payload.ast_json, className: payload.class_name, flameworkPattern: payload.flamework_pattern,
+                    methodName: payload.method_name, executionSide: payload.execution_side, outputType: payload.output_type
                 });
             });
-
-            console.log(`[Memgraph DB] Ракушка "${payload.shell_id}" транзакционно синхронизирована в графе.`);
+            console.log(`[Memgraph DB] Ракушка "${payload.shell_id}" транзакционно синхронизирована.`);
         } catch (error: any) {
-            console.error(`[Memgraph DB Error] Сбой мутации для ракушки "${payload.shell_id}":`, error.message);
+            console.error(`[Memgraph DB Error] Сбой мутации "${payload.shell_id}":`, error.message);
             throw error;
-        } finally {
-            await session.close();
-        }
+        } finally { await session.close(); }
     }
 
     /**

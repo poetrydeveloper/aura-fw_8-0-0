@@ -1,54 +1,51 @@
 name: aura-7
 
+version: '3.8'
+
 services:
-  # 1. Графовая база данных Memgraph
+  # 1. Графовая СУБД Memgraph (Порты изолированы внутри сети Docker)
   memgraph:
-    image: memgraph/memgraph:3.12.0-relwithdebinfo-malloc
+    image: memgraph/memgraph-mage:latest
     container_name: aura7_memgraph
+    expose:
+      - "7687"
+    volumes:
+      - aura7_mg_data:/var/lib/memgraph
     networks:
       - aura7_network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
 
-  # 2. UI-интерфейс управления Memgraph Lab (Напрямую на порт 3001)
+  # 2. Веб-интерфейс Memgraph Lab (Безопасный внешний порт)
   memgraph_lab:
     image: memgraph/lab:latest
     container_name: aura7_memgraph_lab
     ports:
-      - "3001:3000"
-    environment:
-      - QUICK_CONNECT_HOST=memgraph
-      - QUICK_CONNECT_PORT=7687
-    networks:
-      - aura7_network
+      - "47701:3000"
     depends_on:
       - memgraph
+    networks:
+      - aura7_network
 
-  # 3. Бэкенд Ткача (Express API + Детерминированный кодогенератор)
+  # 3. Модульное ядро Ткача (Порт 5000 полностью скрыт от Windows сокетов)
   weaver_backend:
     image: node:20-alpine
     container_name: aura7_weaver_backend
     working_dir: /app
+    expose:
+      - "5000"
     volumes:
-      # ХИРУРГИЧЕСКИЙ ФИКС ДЛЯ WINDOWS: Жестко указываем Docker подняться на 2 папки вверх до корня AURA_5
       - ../../:/app
-      # Изолируем node_modules контейнера, чтобы сборка шла внутри Linux-окружения
       - /app/.aura/services/core/node_modules
     networks:
       - aura7_network
     depends_on:
       - memgraph
-    # Бронированная команда запуска: выводим текущую папку для дебага, заходим и собираем
-    command: sh -c "echo 'Текущие файлы в /app:' && ls -la /app && cd /app/.aura/services/core && npm install && mkdir -p dist && npx tsc && node dist/index.js"
-
-  # 4. Шлюз Nginx (Маршрутизатор API пакетов на порт 7788)
+    command: sh -c "echo '=== АКТИВАЦИЯ КОНТУРА AURA_7 БЕЗ КЭША ===' && ls -la /app && cd /app/.aura/services/core && npm install && rm -rf dist && npx ts-node src/index.ts"
+    # 4. Шлюз Nginx (Внешний шлюз на безопасном порту 47788)
   nginx:
     image: nginx:alpine
     container_name: aura7_nginx_gateway
     ports:
-      - "7788:80"
+      - "47788:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
