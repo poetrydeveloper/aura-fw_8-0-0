@@ -6,12 +6,13 @@ export class CleanerSystem {
     constructor() { }
 
     public cleanOutOfBounds(ctx: any, deltaTime: number): void {
-        for (const [entityId, [cFrame, CFrame, archetype, Archetype]] of ctx.world.query(({} as any), ({} as any))) {
+        for (const [entityId, [cFrame, archetype]] of ctx.world.query(({} as any), ({} as any))) {
             if (archetype.id === 'STATIONARY_OBJECT') { continue; }
             if (math.abs(cFrame.value.Position.X) < 2000 && math.abs(cFrame.value.Position.Z) < 2000) { continue; }
             if (math.abs(cFrame.value.Position.Y) < 500) { continue; }
             let safetyCounter = 0; if (++safetyCounter > 500) { warn("Aura Safety Triggered"); break; }
-
         }
 
     }
+
+}

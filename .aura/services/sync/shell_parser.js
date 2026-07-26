@@ -2,8 +2,9 @@ import fs from 'fs';
 import ts from 'typescript';
 
 /**
- * ⚡ ДЕТЕРМИНИРОВАННЫЙ AST-ИЗВЛЕКАТЕЛЬ МЕТАДАННЫХ v15.3
- * Идеальный баланс: снайперский фильтр корня + каноничный срез тела метода.
+ * ⚡ ДЕТЕРМИНИРОВАННЫЙ AST-ИЗВЛЕКАТЕЛЬ МЕТАДАННЫХ ХОСТА v16.6
+ * Полностью исключает регулярные выражения. Забирает тело метода render
+ * строго по границам нод TypeScript AST, защищая код от обрезания.
  */
 export function parseShellFile(filePath) {
     const sourceText = fs.readFileSync(filePath, 'utf8');
@@ -46,15 +47,37 @@ export function parseShellFile(filePath) {
             }
         }
 
+        // ЧЕСТНЫЙ ИЗВЛЕКАТЕЛЬ МЕТОДА RENDER ЧЕРЕЗ AST НОДЫ
         if (ts.isMethodDeclaration(node) && node.name.getText(sourceFile) === 'render') {
             if (node.body) {
-                const bodyText = node.body.getText(sourceFile);
+                // Если паттерн компонент - забираем внутренности блока {}
                 if (shellData.pattern === 'Component' || filePath.includes('components')) {
+                    const bodyText = node.body.getText(sourceFile);
                     shellData.codeImplementation = bodyText.substring(1, bodyText.length - 1).trim();
                 } else {
-                    const returnMatch = bodyText.match(/return\s*\(([\s\S]*?)\);/);
-                    // ИСПРАВЛЕНО И ВОССТАНОВЛЕНО: Забираем чистый захваченный текст из первой группы массива совпадений!
-                    shellData.codeImplementation = returnMatch ? returnMatch[1].trim() : bodyText.substring(1, bodyText.length - 1).trim();
+                    // Для ECS-систем логики: ищем ноду ParenthesizedExpression (круглые скобки ретерна)
+                    // или JsxElement / JsxSelfClosingElement напрямую внутри блока return
+                    let foundJsxText = "";
+                    
+                    node.body.forEachChild((statement) => {
+                        if (ts.isReturnStatement(statement) && statement.expression) {
+                            let expr = statement.expression;
+                            // Если код обернут в круглые скобки return (...); спускаемся внутрь них
+                            if (ts.isParenthesizedExpression(expr)) {
+                                expr = expr.expression;
+                            }
+                            foundJsxText = expr.getText(sourceFile).trim();
+                        }
+                    });
+
+                    // Если нашли честный JSX-узел компилятора - берем его текст целиком без срезов регулярками!
+                    if (foundJsxText) {
+                        shellData.codeImplementation = foundJsxText;
+                    } else {
+                        // Резервный фолбэк, если ИИ написал плоский ретерн
+                        const bodyText = node.body.getText(sourceFile);
+                        shellData.codeImplementation = bodyText.substring(1, bodyText.length - 1).trim();
+                    }
                 }
             }
         }

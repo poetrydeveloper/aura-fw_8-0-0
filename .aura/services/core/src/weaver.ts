@@ -24,11 +24,9 @@ export class CodeWeaver {
     }
 
     public async weaveProject(): Promise<void> {
-        console.log("=== RUNNING AURA INVERTED-MAP WEAVER v15.1 ===");
+        console.log("=== RUNNING AURA FAST-TRACK STR-WEAVER v15.9 ===");
         const session: Session = this.driver.session();
         const validationProject = new Project({ useInMemoryFileSystem: true });
-        
-        // Каноническое дерево «наоборот»: [Путь к файлу] -> [Массив ID ракушек]
         const mapProjectData: Record<string, string[]> = {};
 
         try {
@@ -40,34 +38,19 @@ export class CodeWeaver {
                        s.rojo_target AS rojoTarget
             `;
             const result = await session.run(cypherQuery);
-            if (result.records.length === 0) {
-                console.warn("[Weaver Warning] В графе Memgraph не обнаружено активных ракушек.");
-                return;
-            }
+            if (result.records.length === 0) return;
 
             const generatedFiles: { virtualPath: string; physicalPath: string }[] = [];
 
-            // 1. Генерация слоя типов компонентов
             const componentShells = result.records.filter(r => r.get('pattern') === 'Component');
             if (componentShells.length > 0) {
-                // ИСПРАВЛЕНО: Безопасное чтение свойства из первой ноды массива [0]
-                const customTarget = componentShells[0].get('rojoTarget');
+                const customTarget = componentShells[0]?.get('rojoTarget');
                 const targetRelPath = customTarget || "src/shared/components.types.ts";
-                
-                const compArtifact = generateComponentTypesFile(validationProject, componentShells, TARGET_SRC_PATH);
-                const absPhysicalPath = path.resolve('/app', targetRelPath);
-                
-                generatedFiles.push({ virtualPath: "src/shared/components.types.ts", physicalPath: absPhysicalPath });
-                
-                // Наполняем дерево «наоборот» для компонентов
-                if (!mapProjectData[targetRelPath]) mapProjectData[targetRelPath] = [];
-                componentShells.forEach(r => {
-                    const shellId = r.get('id');
-                    if (shellId) mapProjectData[targetRelPath].push(shellId);
-                });
+                generateComponentTypesFile(validationProject, componentShells, TARGET_SRC_PATH);
+                generatedFiles.push({ virtualPath: "src/shared/components.types.ts", physicalPath: path.resolve('/app', targetRelPath) });
+                componentShells.forEach(r => { if (r.get('id')) mapProjectData[r.get('id')] = [targetRelPath]; });
             }
 
-            // Группируем ракушки логики по именам классов
             const classBuckets = new Map<string, { pattern: string; side: string; shells: any[] }>();
             const systemShells = result.records.filter(r => r.get('pattern') !== 'Component');
 
@@ -79,42 +62,28 @@ export class CodeWeaver {
                 classBuckets.get(className)!.shells.push(record);
             });
 
-            // 2. Сборка классов ECS-систем по правилам ИИ-адресации
             for (const [className, bucket] of classBuckets.entries()) {
-                // ИСПРАВЛЕНО: Безопасное чтение свойства из первой ноды массива бакета [0]
-                const rawRojoTarget = bucket.shells[0].get('rojoTarget');
-                
-                let targetRelPath = rawRojoTarget;
-                if (!targetRelPath) {
-                    const subFolder = bucket.pattern === 'ControllerMethod' ? 'client/controllers' : 'server/systems';
-                    targetRelPath = `src/${subFolder}/${className}.ts`;
-                }
+                const rawRojoTarget = bucket.shells[0]?.get('rojoTarget');
+                let targetRelPath = rawRojoTarget || `src/${bucket.pattern === 'ControllerMethod' ? 'client/controllers' : 'server/systems'}/${className}.ts`;
 
                 const virtualPath = `src/virtual_${className}.ts`;
                 const physicalPath = path.resolve('/app', targetRelPath);
-
-                let fileContent = `${globalMocksHeader}\nexport class ${className} {\n    constructor() {}\n\n`;
-
                 if (!mapProjectData[targetRelPath]) mapProjectData[targetRelPath] = [];
 
-                bucket.shells.forEach(record => {
-                    const rawBody = record.get('astJson') || "";
-                    const compiledBody = translateJsxToTs(rawBody);
-                    const outputType = record.get('outputType') || 'void';
-                    
-                    const paramsList = ['ctx: any'];
-                    if (bucket.pattern === "MatterSystem") {
-                        paramsList.push("deltaTime: number");
-                    }
+                // СБОРКА СТРОКОВОГО КАРКАСА КЛАССА
+                let fileContent = `${globalMocksHeader}\nexport class ${className} {\n    constructor() {}\n\n`;
 
-                    fileContent += `    public ${record.get('methodName')}(${paramsList.join(', ')}): ${outputType} {\n${compiledBody}\n    }\n\n`;
-                    
-                    // Наполняем дерево «наоборот» для систем логики
-                    const shellId = record.get('id');
-                    if (shellId) mapProjectData[targetRelPath].push(shellId);
+                bucket.shells.forEach(record => {
+                    const compiledBody = translateJsxToTs(record.get('astJson') || "");
+                    const paramsList = ['ctx: any'];
+                    if (bucket.pattern === "MatterSystem") paramsList.push("deltaTime: number");
+
+                    // АППАРАТНАЯ СБОРКА: Подставляем мясо логики и ЖЕСТКО запечатываем закрывающую скобку метода }\n
+                    fileContent += `    public ${record.get('methodName')}(${paramsList.join(', ')}): ${record.get('outputType') || 'void'} {\n${compiledBody}\n    }\n\n`;
+                    if (record.get('id')) mapProjectData[targetRelPath].push(record.get('id'));
                 });
 
-                fileContent += "}\n";
+                fileContent += "}\n"; // ЖЕСТКО запечатываем закрывающую скобку самого класса
                 validationProject.createSourceFile(virtualPath, fileContent, { overwrite: true });
                 generatedFiles.push({ virtualPath, physicalPath });
             }
@@ -128,12 +97,9 @@ export class CodeWeaver {
                 }
             }
 
-            // Атомарно записываем инвертированное Rojo JSON-дерево
             await fs.ensureDir(MAP_PROJECT_DIR);
-            const mapProjectFilePath = path.join(MAP_PROJECT_DIR, 'map_project.json');
-            await fs.writeJson(mapProjectFilePath, mapProjectData, { spaces: 4 });
-            
-            console.log("=== ЦИКЛ СБОРКИ СЕТИ AURA_7 И MAP_PROJECT УСПЕШНО ЗАВЕРШЕН ===");
+            await fs.writeJson(path.join(MAP_PROJECT_DIR, 'map_project.json'), mapProjectData, { spaces: 4 });
+            console.log("=== ЦИКЛ СБОРКИ СЕТИ AURA_7 УСПЕШНО ЗАВЕРШЕН ===");
         } catch (error: any) {
             console.error("❌ КРИТИЧЕСКИЙ СБОЙ КОДОГЕНЕРАЦИИ ТКАЧА:", error.message);
             throw error;

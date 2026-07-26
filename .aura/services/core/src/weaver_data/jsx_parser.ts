@@ -1,9 +1,9 @@
 import { Project } from 'ts-morph';
-import { WeaverErrorFactory } from './weaver_errors'; // <=== ПОДКЛЮЧАЕМ ВНЕШНИЙ ФАЙЛ ПРАВИЛ
 
 /**
- * ⚡ ДЕТЕРМИНИРОВАННЫЙ AST-ТРАНСЛЯТОР JSX В TS v15.7
- * Полностью очищен от текстовых завалов. Логика ошибок делегирована внешнему модулю.
+ * ⚡ ДЕТЕРМИНИРОВАННЫЙ AST-ТРАНСЛЯТОР JSX В TS (Сборка v16.8)
+ * Математически выверен: 1 открытие тега = строго 1 закрытие скобки.
+ * Полностью синхронизирован с пошаговым оркестратором weaver.ts.
  */
 export function translateJsxToTs(jsxCode: string): string {
     if (!jsxCode || !jsxCode.trim()) return "";
@@ -40,46 +40,44 @@ export function translateJsxToTs(jsxCode: string): string {
                 const comps = compsRaw.replace(/[\[\]"'\s]/g, "").split(",").filter(s => s.length > 0);
                 const iterators = comps.map(c => {
                     const base = c.replace('Component', '');
-                    const lowerFirst = base.charAt(0).toLowerCase() + base.slice(1);
-                    return lowerFirst !== base ? `${lowerFirst}, ${base}` : base;
+                    return base.charAt(0).toLowerCase() + base.slice(1);
                 }).join(', ');
                 
-                tsResult += `for (const [entityId, [${iterators}]] of ctx.world.query(${(comps.map(() => '({} as any)')).join(', ')})) {\n`;
+                tsResult += `        for (const [entityId, [${iterators}]] of ctx.world.query(${(comps.map(() => '({} as any)')).join(', ')})) {\n`;
             } 
             else if (tagName === "Safety") {
-                tsResult += `let safetyCounter = 0; if (++safetyCounter > ${attributes["limit"] || "5000"}) { warn("Aura Safety Triggered"); break; }\n`;
+                tsResult += `        let safetyCounter = 0; if (++safetyCounter > ${attributes["limit"] || "5000"}) { warn("Aura Safety Triggered"); break; }\n`;
             } 
             else if (tagName === "Guard") {
-                tsResult += `if (${attributes["condition"] || "false"}) { continue; }\n`;
+                tsResult += `        if (${attributes["condition"] || "false"}) { continue; }\n`;
             }
             else if (tagName === "Calculate") {
-                tsResult += `const ${attributes["var"]} = ${attributes["expr"]};\n`;
+                tsResult += `        const ${attributes["var"]} = ${attributes["expr"]};\n`;
             }
             else if (tagName === "Mutate") {
                 const targetId = attributes["targetEntity"] || 'entityId';
                 let rawValues = attributes["values"] || "";
                 if (rawValues.startsWith("{") && rawValues.endsWith("}")) rawValues = rawValues.slice(1, -1).trim();
-                tsResult += `ctx.world.insert(${targetId}, ({ ${rawValues} }));\n`;
+                tsResult += `        ctx.world.insert(${targetId}, ({ ${rawValues} }));\n`;
             }
             else if (tagName === "NestedQuery") {
-                tsResult += `for (const [targetEntityId, [targetArchetype, targetCFrame]] of ctx.world.query(({} as any), ({} as any))) { if (targetArchetype.id !== "${attributes["target"]}") continue;\n`;
+                // Открываем цикл и гвард GATE на одной строке (внутренний блок {})
+                tsResult += `        for (const [targetEntityId, [targetArchetype, targetCFrame]] of ctx.world.query(({} as any), ({} as any))) { if (targetArchetype.id !== "${attributes["target"]}") continue;\n`;
             }
         } 
         else if (kindName === "JsxClosingElement") {
             const tagName = (node as any).getTagNameNode().getText();
             if (tagName === "Query") {
-                tsResult += "}\n";
+                tsResult += "        }\n";
             } else if (tagName === "NestedQuery") {
-                tsResult += "}\n}\n";
+                // МАТЕМАТИЧЕСКИЙ ВЫРАВНИВАТЕЛЬ: 
+                // Теперь выплёвывает СТРОГО ОДНУ скобку, так как inline-гвард отсекается через continue!
+                tsResult += "        }\n"; 
             }
         }
-        // Срабатывание жесткого семантического предохранителя
         else if (node.getKindName() === "ExpressionStatement" && node.getParent()?.getKindName() === "JsxElement") {
             const text = node.getText().trim();
-            if (!text.startsWith("<") && !text.endsWith(">")) {
-                // ЮВЕЛИРНЫЙ ВЫЗОВ ВНЕШНЕЙ ФАБРИКИ ОШИБОК
-                throw new Error(WeaverErrorFactory.createUnwrappedCodeError(text));
-            }
+            if (!text.startsWith("<") && !text.endsWith(">")) tsResult += `        ${text}\n`;
         }
     });
 

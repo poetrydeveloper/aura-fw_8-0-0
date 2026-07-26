@@ -6,7 +6,7 @@ export class MovementSystem {
     constructor() { }
 
     public updateMovement(ctx: any, deltaTime: number): void {
-        for (const [entityId, [velocity, Velocity, cFrame, CFrame, archetype, Archetype]] of ctx.world.query(({} as any), ({} as any), ({} as any))) {
+        for (const [entityId, [velocity, cFrame, archetype]] of ctx.world.query(({} as any), ({} as any), ({} as any))) {
             if (deltaTime <= 0) { continue; }
             if (archetype.id === 'STATIC_METEOR') { continue; }
             let safetyCounter = 0; if (++safetyCounter > 5000) { warn("Aura Safety Triggered"); break; }
@@ -14,7 +14,8 @@ export class MovementSystem {
             const deltaPos = currentVelocity.mul(deltaTime);
             const nextCFrame = cFrame.value.add(deltaPos);
             ctx.world.insert(entityId, ({ value: "nextCFrame" }));
-
         }
 
     }
+
+}

@@ -1,18 +1,18 @@
 {
-    "src/shared/components.types.ts": [
-        "GalaxyArchetype"
-    ],
-    "src/server/systems/CollisionSystem.ts": [
-        "ecs_galaxy_collision_v1"
-    ],
-    "src/client/controllers/InputSystem.ts": [
-        "ctl_input_v1"
+    "GalaxyArchetype": [
+        "src/shared/components.types.ts"
     ],
     "src/server/systems/CleanerSystem.ts": [
         "ecs_galaxy_cleaner_v1"
     ],
+    "src/server/systems/CollisionSystem.ts": [
+        "ecs_galaxy_collision_v1"
+    ],
     "src/server/systems/MovementSystem.ts": [
         "ecs_move_02_v1"
+    ],
+    "src/client/controllers/InputSystem.ts": [
+        "ctl_input_v1"
     ],
     "src/server/systems/WeaponTimerSystem.ts": [
         "ecs_galaxy_weapon_timer_v1"

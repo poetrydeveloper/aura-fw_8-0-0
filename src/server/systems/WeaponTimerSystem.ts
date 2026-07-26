@@ -6,7 +6,7 @@ export class WeaponTimerSystem {
     constructor() { }
 
     public updateWeaponCooldowns(ctx: any, deltaTime: number): void {
-        for (const [entityId, [weaponState, WeaponState, archetype, Archetype]] of ctx.world.query(({} as any), ({} as any))) {
+        for (const [entityId, [weaponState, archetype]] of ctx.world.query(({} as any), ({} as any))) {
             if (weaponState.isCharging === true) { continue; }
             if (weaponState.nextTimer <= 0) { continue; }
             let safetyCounter = 0; if (++safetyCounter > 2000) { warn("Aura Safety Triggered"); break; }
@@ -14,7 +14,8 @@ export class WeaponTimerSystem {
             const nextTimer = math.max(0, weaponState.nextTimer.sub(timeDecrement));
             if (nextTimer === 0) { continue; }
             ctx.world.insert(entityId, ({ nextTimer: "0", isCharging: "false" }));
-
         }
 
     }
+
+}

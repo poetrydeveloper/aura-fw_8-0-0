@@ -6,7 +6,7 @@ export class InputSystem {
     constructor() { }
 
     public processLocalInput(ctx: any): void {
-        for (const [entityId, [velocity, Velocity, archetype, Archetype, cFrame, CFrame]] of ctx.world.query(({} as any), ({} as any), ({} as any))) {
+        for (const [entityId, [velocity, archetype, cFrame]] of ctx.world.query(({} as any), ({} as any), ({} as any))) {
             if (ctx.isLocalPlayer === false) { continue; }
             if (archetype.id !== 'GALAXY_PLAYER') { continue; }
             let safetyCounter = 0; if (++safetyCounter > 100) { warn("Aura Safety Triggered"); break; }
@@ -15,7 +15,8 @@ export class InputSystem {
             const targetVelocity = inputDirection.mul(maxSpeed);
             if (targetVelocity.Magnitude === 0 && velocity.value.Magnitude === 0) { continue; }
             ctx.world.insert(entityId, ({ value: "targetVelocity" }));
-
         }
 
     }
+
+}
