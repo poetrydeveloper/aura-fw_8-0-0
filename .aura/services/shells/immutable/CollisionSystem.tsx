@@ -1,35 +1,36 @@
-import { AuraShell, Query, Guard, Safety, NestedQuery, Mutate } from ".aura/core";
+import { AuraShell, Query, Guard, Safety, Calculate, Mutate, NestedQuery } from ".aura/core";
 
 export const CollisionSystem = AuraShell({
     id: "ecs_galaxy_collision_v1",
     status: "active",
     version: 1,
     vocabularyContract: "Aura_Galaxy_Vocabulary_v7.0",
-    meta: {
-        oddLayerIso34503: 5,
-        executionSide: "Server",
-        flameworkPattern: "MatterSystem",
-        className: "CollisionSystem",
-        methodName: "checkCollisions",
-        uiTrigger: "Heartbeat",
-        context: "Расчет пересечения пространственных векторов снарядов и перехватчиков"
-    },
-    perspectives: {
-        semanticSvo: { subject: "CollisionSystem", action: "Triggers", object: "DamagePayloadComponent" },
-        dataFlow: { reads: ["ArchetypeComponent", "CFrameComponent", "DamageComponent"], mutates: ["DamagePayloadComponent"] }
-    },
+    className: "CollisionSystem",
+    flameworkPattern: "MatterSystem",
+    methodName: "checkCollisions",
+    executionSide: "Server",
+    rojoTarget: "src/server/systems/CollisionSystem.ts", // <=== Наше Rojo-правило v15.0
+    subject: "CollisionSystem",
+    action: "Detects",
+    object: "HealthComponent",
     render(ctx) {
         return (
-            <Query components={["ArchetypeComponent", "CFrameComponent", "DamageComponent"]}>
+            <Query components={["CFrameComponent", "VelocityComponent", "ArchetypeComponent"]}>
+                <Guard condition="ctx.isServer === false" />
+                <Guard condition="archetype.id !== 'PROJECTILE'" />
                 <Safety limit={1000} />
-                <Guard condition="archetype.id !== 'PLASMA_BOLT'" />
                 
-                {/* Вложенный цикл сканирования по архетипу врагов */}
-                <NestedQuery target="ENEMY_INTERCEPTOR">
-                    <Guard condition="cframe.value.Position.sub(targetCFrame.value.Position).Magnitude < 4" />
-                    {/* Накладываем дельту урона на цель и мгновенно утилизируем снаряд */}
-                    <Mutate component="DamagePayloadComponent" values={{ value: "damage.value" }} targetEntity="targetEntityId" />
-                    ctx.world.despawn(entityId);
+                <NestedQuery target="GALAXY_PLAYER">
+                    <Calculate var="distance" expr="cFrame.value.Position.sub(targetCFrame.value.Position).Magnitude" />
+                    <Guard condition="distance > 3" />
+                    
+                    <Calculate var="damagePayload" expr="math.clamp(velocity.value.Magnitude.mul(2), 10, 50)" />
+                    <Mutate targetEntity="targetEntityId" component="HealthComponent" values={{ current: "targetHealth.current.sub(damagePayload)" }} />
+                    <Mutate component="ExplosionTriggerComponent" values={{ radius: 12, force: 300, active: true }} />
+                    
+                    {/* Прямой Luau-код обработки эффектов на сервере */}
+                    print("Cosmic Collision detected between Projectile and Player! Distance:", distance);
+                    warn("Applying planetary damage payload to Entity:", targetEntityId);
                 </NestedQuery>
             </Query>
         );

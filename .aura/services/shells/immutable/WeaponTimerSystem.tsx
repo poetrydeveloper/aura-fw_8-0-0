@@ -5,33 +5,29 @@ export const WeaponTimerSystem = AuraShell({
     status: "active",
     version: 1,
     vocabularyContract: "Aura_Galaxy_Vocabulary_v7.0",
-    meta: {
-        oddLayerIso34503: 3,
-        executionSide: "Server",
-        flameworkPattern: "MatterSystem",
-        className: "WeaponTimerSystem",
-        methodName: "tickWeaponTimers",
-        uiTrigger: "Heartbeat",
-        context: "Управление кулдаунами и готовностью оружия к следующему залпу"
-    },
-    perspectives: {
-        semanticSvo: { subject: "WeaponTimerSystem", action: "Increments", object: "WeaponCooldownComponent" },
-        dataFlow: { reads: ["WeaponCooldownComponent"], mutates: ["WeaponCooldownComponent"] }
-    },
-    render(ctx, deltaTime: number) {
+    className: "WeaponTimerSystem",
+    flameworkPattern: "MatterSystem",
+    methodName: "updateWeaponCooldowns",
+    executionSide: "Server",
+    rojoTarget: "src/server/systems/WeaponTimerSystem.ts", // <=== Наше Rojo-правило v15.0
+    subject: "WeaponTimerSystem",
+    action: "Updates",
+    object: "WeaponStateComponent",
+    render(ctx) {
         return (
-            <Query components={["WeaponCooldownComponent"]}>
-                <Guard condition="weaponCooldown.state === 'READY' || deltaTime <= 0" />
+            <Query components={["WeaponStateComponent", "ArchetypeComponent"]}>
+                <Guard condition="weaponState.isCharging === true" />
+                <Guard condition="weaponState.nextTimer <= 0" />
                 <Safety limit={2000} />
                 
-                <Calculate var="nextTimer" expr="weaponCooldown.currentTimer + deltaTime" />
+                <Calculate var="timeDecrement" expr="deltaTime" />
+                <Calculate var="nextTimer" expr="math.max(0, weaponState.nextTimer.sub(timeDecrement))" />
                 
-                {/* Кассетное ветвление переключения состояния оружия */}
-                <Guard condition="nextTimer >= weaponCooldown.rateOfFire" />
-                <Mutate component="WeaponCooldownComponent" values={{ state: "'READY'", currentTimer: "0" }} />
+                <Guard condition="nextTimer === 0" />
+                <Mutate component="WeaponStateComponent" values={{ nextTimer: "0", isCharging: "false" }} />
                 
-                <Guard condition="nextTimer < weaponCooldown.rateOfFire" />
-                <Mutate component="WeaponCooldownComponent" values={{ currentTimer: "nextTimer" }} />
+                {/* Luau-уведомление о готовности турелей коробля к залпу */}
+                print("[Aura Weapon Grid] Перезарядка орудий завершена для сущности:", entityId);
             </Query>
         );
     }

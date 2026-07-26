@@ -9,16 +9,27 @@ export const MovementSystem = AuraShell({
     flameworkPattern: "MatterSystem",
     methodName: "updateMovement",
     executionSide: "Server",
+    rojoTarget: "src/server/systems/MovementSystem.ts", // Наше Rojo-правило v15.0
     subject: "MovementSystem",
     action: "Updates",
     object: "CFrameComponent",
-    render(ctx, deltaTime: number) {
+    render(ctx) {
         return (
-            <Query components={["VelocityComponent", "CFrameComponent"]}>
+            <Query components={["VelocityComponent", "CFrameComponent", "ArchetypeComponent"]}>
                 <Guard condition="deltaTime <= 0" />
+                <Guard condition="archetype.id === 'STATIC_METEOR'" />
                 <Safety limit={5000} />
-                <Calculate var="deltaPos" expr="velocity.value.mul(deltaTime)" />
-                <Mutate component="CFrameComponent" values={{ value: "cframe.value.add(deltaPos)" }} />
+                
+                <Calculate var="currentVelocity" expr="velocity.value" />
+                <Calculate var="deltaPos" expr="currentVelocity.mul(deltaTime)" />
+                <Calculate var="nextCFrame" expr="cFrame.value.add(deltaPos)" />
+                
+                <Mutate component="CFrameComponent" values={{ value: "nextCFrame" }} />
+                
+                {/* Отладочный Luau-вектор движения в ОЗУ сервера */}
+                if (currentVelocity.Magnitude > 100) {
+                    print("[AURA Physics] Обнаружено высокоскоростное перемещение объекта:", entityId);
+                }
             </Query>
         );
     }

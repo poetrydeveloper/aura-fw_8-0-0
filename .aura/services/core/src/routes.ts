@@ -47,6 +47,7 @@ router.post('/sync-shell', async (req: Request, res: Response) => {
             flamework_pattern: targetPattern,
             method_name: semanticObj.methodName || "update",
             execution_side: semanticObj.executionSide || "Server",
+            rojo_target: semanticObj.rojoTarget || "", // <=== ПРОБРОС РЕКОМЕНДОВАННОЙ АДРЕСАЦИИ В СУБД
             output_type: semanticObj.outputType || "void"
         });
 

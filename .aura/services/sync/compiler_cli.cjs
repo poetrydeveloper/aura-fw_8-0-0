@@ -4,7 +4,7 @@ const path = require('path');
 
 const IMMUTABLE_DIR = path.resolve(__dirname, '../shells/immutable');
 
-console.log("=== START AURA UNBREAKABLE BASE64 CONVEYOR v14.6 ===");
+console.log("=== START AURA UNBREAKABLE BASE64 CONVEYOR v15.0 ===");
 console.log(`| TSX Source directory: ${IMMUTABLE_DIR}`);
 console.log(`| Target Nginx API Gateway: http://localhost:47788/api/sync-shell`);
 
@@ -20,12 +20,13 @@ if (!fs.existsSync(IMMUTABLE_DIR)) {
         const { parseShellFile } = await import('./shell_parser.js');
         const { sendPayloadToGateway } = await import('./network_sender.js');
 
-        const sourceFiles = fs.readdirSync(IMMUTABLE_DIR).filter(file => file.endsWith('.tsx'));
+        // ВСЕЯДНЫЙ ФИЛЬТР: Сканируем и .tsx, и .ts файлы ракушек Галактики!
+        const sourceFiles = fs.readdirSync(IMMUTABLE_DIR).filter(file => file.endsWith('.tsx') || file.endsWith('.ts'));
         console.log(`| Обнаружено иммутабельных ракушек для сканирования: ${sourceFiles.length} шт.`);
 
         sourceFiles.forEach(file => {
             const srcFilePath = path.join(IMMUTABLE_DIR, file);
-            const fileBaseName = path.basename(file, '.tsx');
+            const fileBaseName = file.replace(/\.tsx?$/, ''); // Универсальный срез расширения
             
             try {
                 const shellData = parseShellFile(srcFilePath);
@@ -41,6 +42,7 @@ if (!fs.existsSync(IMMUTABLE_DIR)) {
                     flameworkPattern: shellData.pattern,
                     methodName: shellData.methodName,
                     executionSide: shellData.executionSide,
+                    rojoTarget: shellData.rojoTarget, // <=== ШАГ 2: Инжектируем рекомендованный Rojo-путь в метаданные сетевого пакета
                     outputType: "void"
                 };
 

@@ -11,6 +11,7 @@ interface SyncShellFields {
     flamework_pattern: string;
     method_name: string;
     execution_side: string;
+    rojo_target: string; // <=== ДОБАВЛЕНО В ИНТЕРФЕЙС ПАКЕТА ДНК
     output_type: string;
 }
 
@@ -60,6 +61,7 @@ class MemgraphDatabase {
             }
         }
     }
+
     /**
      * Атомарная транзакция: Создание мутации ракушки, AST-кода и перенос ребер графа (Memgraph Native)
      */
@@ -88,6 +90,7 @@ class MemgraphDatabase {
                         flamework_pattern: $flameworkPattern,
                         method_name: $methodName, 
                         execution_side: $executionSide,
+                        rojo_target: $rojoTarget, // <=== УЗЕЛ ТЕПЕРЬ ХРАНИТ РЕКОМЕНДОВАННУЮ АДРЕСАЦИЮ В ГРАФЕ
                         output_type: $outputType, 
                         synced_at: timestamp()
                     })
@@ -131,7 +134,9 @@ class MemgraphDatabase {
                 await tx.run(cypherQuery, {
                     shellId: payload.shell_id, subject: payload.subject, verb: payload.verb, object: payload.object,
                     astJson: payload.ast_json, className: payload.class_name, flameworkPattern: payload.flamework_pattern,
-                    methodName: payload.method_name, executionSide: payload.execution_side, outputType: payload.output_type
+                    methodName: payload.method_name, executionSide: payload.execution_side, 
+                    rojoTarget: payload.rojo_target, // <=== ИНЖЕКТ ПЕРЕМЕННОЙ В ТРАНЗАКЦИЮ СУБД
+                    outputType: payload.output_type
                 });
             });
             console.log(`[Memgraph DB] Ракушка "${payload.shell_id}" транзакционно синхронизирована.`);

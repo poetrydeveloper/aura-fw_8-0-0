@@ -5,29 +5,30 @@ export const InputSystem = AuraShell({
     status: "active",
     version: 1,
     vocabularyContract: "Aura_Galaxy_Vocabulary_v7.0",
-    meta: {
-        oddLayerIso34503: 3,
-        executionSide: "Client",
-        flameworkPattern: "MatterSystem",
-        className: "InputSystem",
-        methodName: "handleInput",
-        uiTrigger: "Heartbeat",
-        context: "Инжекция направления перемещения локального игрока в ECS компоненты"
-    },
-    perspectives: {
-        semanticSvo: { subject: "InputSystem", action: "Modifies", object: "VelocityComponent" },
-        dataFlow: { reads: ["VelocityComponent", "ArchetypeComponent"], mutates: ["VelocityComponent"] }
-    },
+    className: "InputSystem",
+    flameworkPattern: "ControllerMethod",
+    methodName: "processLocalInput",
+    executionSide: "Client",
+    rojoTarget: "src/client/controllers/InputSystem.ts", // Наше Rojo-правило v15.0
+    subject: "InputSystem",
+    action: "Modifies",
+    object: "VelocityComponent",
     render(ctx) {
         return (
-            <Query components={["VelocityComponent", "ArchetypeComponent"]}>
-                <Guard condition="ctx.isLocalPlayer === false || archetype.id !== 'GALAXY_PLAYER'" />
+            <Query components={["VelocityComponent", "ArchetypeComponent", "CFrameComponent"]}>
+                <Guard condition="ctx.isLocalPlayer === false" />
+                <Guard condition="archetype.id !== 'GALAXY_PLAYER'" />
                 <Safety limit={100} />
                 
                 <Calculate var="inputDirection" expr="ctx.getPlatformInputVector()" />
                 <Calculate var="maxSpeed" expr="ctx.getBaseSpeed('GALAXY_PLAYER')" />
+                <Calculate var="targetVelocity" expr="inputDirection.mul(maxSpeed)" />
                 
-                <Mutate component="VelocityComponent" values={{ value: "inputDirection.mul(maxSpeed)" }} />
+                <Guard condition="targetVelocity.Magnitude === 0 && velocity.value.Magnitude === 0" />
+                <Mutate component="VelocityComponent" values={{ value: "targetVelocity" }} />
+                
+                {/* Локальный Luau-инжект обработки пользовательского ввода */}
+                ctx.inputDispatcher.fireAccelerationHeartbeat(targetVelocity);
             </Query>
         );
     }
