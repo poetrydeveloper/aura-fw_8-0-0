@@ -24,3 +24,4 @@ docker compose -f .aura/docker/docker-compose.yml up -d --build --force-recreate
 docker compose down -v
 
 
+docker logs aura7_weaver_backend

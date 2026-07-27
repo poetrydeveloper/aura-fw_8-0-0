@@ -1,62 +1,59 @@
-// .aura/services/sync/compiler_cli.cjs
 const fs = require('fs');
 const path = require('path');
+const { parseShellFile } = require('./shell_parser.cjs');
+const { sendPayloadToGateway } = require('./network_sender.js');
 
-const IMMUTABLE_DIR = path.resolve(__dirname, '../shells/immutable');
+const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const SHELLS_DIR = path.join(PROJECT_ROOT, '.aura/services/shells/immutable');
 
-console.log("=== START AURA UNBREAKABLE BASE64 CONVEYOR v14.6 ===");
-console.log(`| TSX Source directory: ${IMMUTABLE_DIR}`);
-console.log(`| Target Nginx API Gateway: http://localhost:47788/api/sync-shell`);
+console.log("=== START AURA UNBREAKABLE BASE64 CONVEYOR v18.5 (DOUBLE B64 MODE) ===");
+console.log(`| Julia Source directory: ${SHELLS_DIR}`);
 
-if (!fs.existsSync(IMMUTABLE_DIR)) {
-    console.error(`❌ Критическая ошибка: Папка исходных ракушек не найдена: ${IMMUTABLE_DIR}`);
+if (!fs.existsSync(SHELLS_DIR)) {
+    console.error(`| ❌ КРИТИЧЕСКАЯ ОШИБКА: Директория не найдена: ${SHELLS_DIR}`);
     process.exit(1);
 }
 
-// Асинхронный запуск рантайма для бесшовной интеграции CommonJS с ESM
-(async () => {
+const allFiles = fs.readdirSync(SHELLS_DIR);
+const juliaFiles = allFiles.filter(file => file.endsWith('.jl'));
+
+console.log(`| Обнаружено иммутабельных ракушек для сканирования: ${juliaFiles.length} шт.`);
+console.log("=========================================================");
+
+for (const file of juliaFiles) {
+    const fullPath = path.join(SHELLS_DIR, file);
+    const fileBaseName = path.basename(file, '.jl');
+    
     try {
-        // Динамический импорт соседних .js файлов в области видимости Node.js
-        const { parseShellFile } = await import('./shell_parser.js');
-        const { sendPayloadToGateway } = await import('./network_sender.js');
-
-        const sourceFiles = fs.readdirSync(IMMUTABLE_DIR).filter(file => file.endsWith('.tsx'));
-        console.log(`| Обнаружено иммутабельных ракушек для сканирования: ${sourceFiles.length} шт.`);
-
-        sourceFiles.forEach(file => {
-            const srcFilePath = path.join(IMMUTABLE_DIR, file);
-            const fileBaseName = path.basename(file, '.tsx');
-            
-            try {
-                const shellData = parseShellFile(srcFilePath);
-                
-                if (!shellData.id) throw new Error("В TSX структуре ракушки не обнаружен обязательный параметр ID!");
-                if (!shellData.codeImplementation) throw new Error("Метод render() пуст или поврежден.");
-
-                const semanticSvo = {
-                    subject: shellData.subject || shellData.className || fileBaseName,
-                    verb: shellData.action || "Updates",
-                    object: shellData.object || "Component",
-                    className: shellData.className || fileBaseName,
-                    flameworkPattern: shellData.pattern,
-                    methodName: shellData.methodName,
-                    executionSide: shellData.executionSide,
-                    outputType: "void"
-                };
-
-                const base64Payload = {
-                    shell_id: shellData.id,
-                    meta_semantic: Buffer.from(JSON.stringify(semanticSvo)).toString('base64'),
-                    payload_code_b64: Buffer.from(shellData.codeImplementation).toString('base64')
-                };
-
-                sendPayloadToGateway(base64Payload, fileBaseName);
-            } catch (e) {
-                console.error(`| ❌ ОШИБКА АНАЛИЗА в исходнике [${file}]: ${e.message}`);
-            }
-        });
-        console.log("=========================================================");
-    } catch (globalErr) {
-        console.error("❌ Критический сбой инициализации модулей хоста:", globalErr.message);
+        const shellData = parseShellFile(fullPath);
+        
+        // 1. Кодируем в Base64 сырой текст Julia-логики ракушки
+        const rawCodeText = shellData.codeImplementation;
+        const base64CodeMonolith = Buffer.from(rawCodeText, 'utf8').toString('base64');
+        
+        // 2. Упаковываем метаданные в JSON, а затем ТОЖЕ жестко кодируем в Base64 для роутера!
+        const semanticMetaObj = {
+            className: String(shellData.className),
+            methodName: String(shellData.methodName),
+            flameworkPattern: String(shellData.pattern),
+            executionSide: String(shellData.executionSide),
+            rojoTarget: String(shellData.rojoTarget),
+            subject: String(shellData.subject),
+            action: String(shellData.action),
+            object: String(shellData.object)
+        };
+        const base64SemanticMonolith = Buffer.from(JSON.stringify(semanticMetaObj), 'utf8').toString('base64');
+        
+        // СБОРКА СЕТЕВОГО ПАКЕТА В ИДЕАЛЬНОМ КАНOНЕ СЕРВЕРА
+        const alignedPayload = {
+            shell_id: String(shellData.id),
+            payload_code_b64: String(base64CodeMonolith),
+            meta_semantic: String(base64SemanticMonolith) // <=== ТЕПЕРЬ СТРОГО СТРОКА BASE64!
+        };
+        
+        sendPayloadToGateway(alignedPayload, fileBaseName);
+        
+    } catch (error) {
+        console.error(`| ❌ ОШИБКА АНАЛИЗА в исходнике [${file}]:`, error.message);
     }
-})();
+}
