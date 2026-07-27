@@ -1,9 +1,7 @@
 name: aura-7
 
-version: '3.8'
-
 services:
-  # 1. Графовая СУБД Memgraph (Порты изолированы внутри сети Docker)
+  # 1. Графовая СУБД Memgraph (Чистый, стабильный запуск без капризных флагов)
   memgraph:
     image: memgraph/memgraph-mage:latest
     container_name: aura7_memgraph
@@ -40,7 +38,8 @@ services:
     depends_on:
       - memgraph
     command: sh -c "echo '=== АКТИВАЦИЯ КОНТУРА AURA_7 БЕЗ КЭША ===' && ls -la /app && cd /app/.aura/services/core && npm install && rm -rf dist && npx ts-node src/index.ts"
-    # 4. Шлюз Nginx (Внешний шлюз на безопасном порту 47788)
+
+  # 4. Шлюз Nginx (Внешний шлюз на безопасном порту 47788)
   nginx:
     image: nginx:alpine
     container_name: aura7_nginx_gateway
@@ -52,6 +51,27 @@ services:
       - aura7_network
     depends_on:
       - weaver_backend
+
+  # 🚀 5. АВТО-ОПОВЕЩАТЕЛЬ ГОТОВНОСТИ КОНТУРА (Всеядный пинг сетевых сокетов)
+  readiness_checker:
+    image: alpine:latest
+    container_name: aura7_readiness_checker
+    networks:
+      - aura7_network
+    depends_on:
+      - memgraph
+      - nginx
+    command: >
+      sh -c "
+        echo '⏳ Ожидание полной инициализации сетевых портов и базы данных...';
+        while ! mknod /tmp/pipe p 2>/dev/null; do sleep 0.5; done;
+        until nc -w 1 memgraph 7687 2>/dev/null; do sleep 1; done;
+        until nc -w 1 nginx 80 2>/dev/null; do sleep 1; done;
+        echo '=========================================================';
+        echo '🔥 [AURA_7 SYSTEM CHECK] ВСЕ КОНТЕЙНЕРЫ И БАЗА УСПЕШНО ПОДНЯТЫ!';
+        echo '🚀 КОНТУР ГОТОВ К ПРИЕМУ ПАКЕТОВ ДНК. МОЖНО ЗАПУСКАТЬ ТРАНСПОРТ!';
+        echo '=========================================================';
+      "
 
 volumes:
   aura7_mg_data:

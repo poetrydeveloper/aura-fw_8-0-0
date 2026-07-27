@@ -11,14 +11,19 @@ export class WeaponTimerSystem {
             status = "active",
             version = 1,
             vocabularyContract = "Aura_Galaxy_Vocabulary_v7.0",
-            className = "WeaponTimerSystem",
-            flameworkPattern = "MatterSystem",
-            methodName = "updateWeaponCooldowns",
-            executionSide = "Server",
-            rojoTarget = "src/server/systems/WeaponTimerSystem.ts",
-            subject = "WeaponTimerSystem",
-            action = "Updates",
-            object = "WeaponStateComponent",
+
+            meta = Dict(
+                "executionSide" => "Server",
+                "flameworkPattern" => "MatterSystem",
+                "className" => "WeaponTimerSystem",
+                "methodName" => "updateWeaponCooldowns",
+                "context" => "Серверный апдейт кулдаунов и перезарядки турелей"
+            ),
+
+            perspectives = Dict(
+                "semanticSvo" => Dict("subject" => "WeaponTimerSystem", "action" => "Updates", "object" => "WeaponStateComponent"),
+                "dataFlow" => Dict("reads" => ["WeaponStateComponent", "ArchetypeComponent"], "mutates" => ["WeaponStateComponent"])
+            ),
 
             render = function(ctx)
         for (const [entityId, [weaponState, archetype]] of ctx.world.query(({} as any), ({} as any))) {
