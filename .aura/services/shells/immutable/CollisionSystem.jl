@@ -26,7 +26,7 @@ AuraShell(
             Guard(condition = "archetype.id !== 'PLASMA_BOLT'")
             
             NestedQuery(target = "ENEMY_INTERCEPTOR") do
-                Guard(condition = "cframe.value.Position.sub(targetCFrame.value.Position).Magnitude < 4")
+                Guard(condition = "cFrame.value.Position.sub(targetCFrame.value.Position).Magnitude < 4")
                 Mutate(component = "DamagePayloadComponent", values = Dict("value" => "damage.value"), targetEntity = "targetEntityId")
                 
                 ctx.world.despawn(entityId)

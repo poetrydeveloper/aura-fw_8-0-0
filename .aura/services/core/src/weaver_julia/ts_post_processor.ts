@@ -1,3 +1,11 @@
+/**
+ * ⚡ ИЗОЛИРОВАННЫЙ СЛУЖЕБНЫЙ МОДУЛЬ ТИПИЗАЦИИ TS v38.0
+ * Хранит глобальную шапку моков и строгие контракты контекста для компилятора rbxtsc.
+ * Полностью сохранен каркас Safe-интерфейсов математики движения.
+ * Защищено поле value компонента DamageComponent под типы number и string.
+ */
+
+export const globalMocksHeader = `// --- AURA RUNTIME TYPE EMBED CONTOUR v38.0 (STRICT MATHEMATICS) ---
 import { ArchetypeComponent, VelocityComponent, CFrameComponent, WeaponStateComponent, HealthComponent, ExplosionTriggerComponent } from "../../shared/components.types";
 
 // Создаем строгие локальные интерфейсы для математических формул линтера rbxtsc
@@ -58,23 +66,4 @@ interface AuraContext {
         fireAccelerationHeartbeat: (velocity: SafeVector3Value) => void;
     };
 }
-
-export class CollisionSystem {
-    constructor() { }
-
-    public checkCollisions(ctx: AuraContext, deltaTime: number): void {
-        for (const [entityId, [archetype, cFrame, damage]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent, DamageComponent]>) {
-            let safetyCounter = 0; if (++safetyCounter > 1000) { warn("Aura Safety Triggered"); break; }
-            if (!(archetype.id !== 'PLASMA_BOLT')) { continue; }
-
-            for (const [targetEntityId, [targetArchetype, targetCFrame]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent]>) {
-                if (targetArchetype.id !== "ENEMY_INTERCEPTOR") continue;
-                if (!(cFrame.value.Position.sub(targetCFrame.value.Position).Magnitude < 4)) { continue; }
-                ctx.world.insert(targetEntityId, ({ value: damage.value } as unknown as Record<string, unknown>));
-
-                ctx.world.despawn(entityId)
-            }
-        }
-    }
-
-}
+`;
