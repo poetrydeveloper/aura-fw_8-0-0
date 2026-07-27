@@ -25,3 +25,11 @@ docker compose down -v
 
 
 docker logs aura7_weaver_backend
+
+======================================================
+
+
+docker compose down -v
+
+# 2. Запускаем пересборку БЕЗ флага -d!
+docker compose up --build --force-recreate

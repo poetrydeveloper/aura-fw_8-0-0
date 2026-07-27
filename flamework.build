@@ -1,0 +1,12 @@
+{
+	"version": 1,
+	"flameworkVersion": "1.3.2",
+	"identifiers": {
+		"aura-roblox-game:out/server/systems/CleanerSystem@CleanerSystem": "server/systems/CleanerSystem@CleanerSystem",
+		"aura-roblox-game:out/server/systems/CollisionSystem@CollisionSystem": "server/systems/CollisionSystem@CollisionSystem",
+		"aura-roblox-game:out/server/systems/InputSystem@InputSystem": "server/systems/InputSystem@InputSystem",
+		"aura-roblox-game:out/server/systems/MovementSystem@MovementSystem": "server/systems/MovementSystem@MovementSystem",
+		"aura-roblox-game:out/server/systems/WeaponTimerSystem@WeaponTimerSystem": "server/systems/WeaponTimerSystem@WeaponTimerSystem"
+	},
+	"metadata": {}
+}
