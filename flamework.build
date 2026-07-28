@@ -7,7 +7,9 @@
 		"aura-roblox-game:out/server/systems/InputSystem@InputSystem": "server/systems/InputSystem@InputSystem",
 		"aura-roblox-game:out/server/systems/MovementSystem@MovementSystem": "server/systems/MovementSystem@MovementSystem",
 		"aura-roblox-game:out/server/systems/WeaponTimerSystem@WeaponTimerSystem": "server/systems/WeaponTimerSystem@WeaponTimerSystem",
-		"aura-roblox-game:out/client/controllers/InputSystem@InputSystem": "client/controllers/InputSystem@InputSystem"
+		"aura-roblox-game:out/client/controllers/InputSystem@InputSystem": "client/controllers/InputSystem@InputSystem",
+		"aura-roblox-game:out/server/systems/EnemyAiSystem@EnemyAiSystem": "server/systems/EnemyAiSystem@EnemyAiSystem",
+		"aura-roblox-game:out/server/systems/HealthSystem@HealthSystem": "server/systems/HealthSystem@HealthSystem"
 	},
 	"metadata": {}
 }
