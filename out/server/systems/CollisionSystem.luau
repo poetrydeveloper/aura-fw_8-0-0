@@ -1,6 +1,5 @@
 -- Compiled with roblox-ts v3.0.0
--- Создаем строгие локальные интерфейсы для математических формул линтера rbxtsc
--- Переопределяем типы полей value внутри систем, чтобы линтер видел в них числа, а не any!
+-- Изолировано в общем контуре
 local CollisionSystem
 do
 	CollisionSystem = setmetatable({}, {

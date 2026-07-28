@@ -1,69 +1,20 @@
 /**
- * ⚡ ИЗОЛИРОВАННЫЙ СЛУЖЕБНЫЙ МОДУЛЬ ТИПИЗАЦИИ TS v38.0
- * Хранит глобальную шапку моков и строгие контракты контекста для компилятора rbxtsc.
- * Полностью сохранен каркас Safe-интерфейсов математики движения.
- * Защищено поле value компонента DamageComponent под типы number и string.
+ * ⚡ МОДУЛЬНЫЙ СЛУЖЕБНЫЙ ПРОЦЕССОР ТИПИЗАЦИИ TS v43.1
+ * Собирает глобальную шапку контрактов как конструктор LEGO из изолированных файлов правил.
+ * Исправлена опечатка дублирования путей импорта ts_rules.
  */
 
-export const globalMocksHeader = `// --- AURA RUNTIME TYPE EMBED CONTOUR v38.0 (STRICT MATHEMATICS) ---
+import { tsSpawnRules } from './ts_rules/ts_spawn_rules';
+import { tsMovementRules } from './ts_rules/ts_movement_rules'; // <=== ОПЕЧАТКА ИСПРАВЛЕНА
+import { tsDamageRules } from './ts_rules/ts_damage_rules';
+import { tsGlobalMocks } from './ts_rules/ts_global_mocks';
+
+// Динамически склеиваем матрицу типов из независимых файлов правил
+export const globalMocksHeader = `// --- AURA RUNTIME TYPE EMBED CONTOUR v43.1 (LEGO MODULAR MATRIX) ---
 import { ArchetypeComponent, VelocityComponent, CFrameComponent, WeaponStateComponent, HealthComponent, ExplosionTriggerComponent } from "../../shared/components.types";
 
-// Создаем строгие локальные интерфейсы для математических формул линтера rbxtsc
-interface SafePosition {
-    X: number;
-    Y: number;
-    Z: number;
-}
-
-interface SafeCFrameValue {
-    Position: SafePosition;
-}
-
-interface SafeVector3Value {
-    X: number;
-    Y: number;
-    Z: number;
-    Magnitude: number;
-    sub: (other: SafePosition) => SafeVector3Value;
-    mul: (scalar: number) => SafeVector3Value;
-}
-
-// Переопределяем типы полей value внутри систем, чтобы линтер видел в них числа, а не any!
-declare global {
-    interface CFrameComponent {
-        value: SafeCFrameValue;
-        lastUpdated: number;
-    }
-    interface VelocityComponent {
-        value: SafeVector3Value;
-        angular: SafeVector3Value;
-    }
-    interface DamageComponent {
-        value: number | string; // <=== БЕРЕЖНО ДОБАВЛЕНА ПОДДЕРЖКА СТРОК И ЧИСЕЛ
-    }
-}
-
-declare const game: unknown;
-declare const Enum: unknown;
-declare const math: {
-    abs: (value: number) => number;
-    max: (x: number, y: number) => number;
-    min: (x: number, y: number) => number;
-};
-declare function warn(...args: unknown[]): void;
-declare function print(...args: unknown[]): void;
-
-interface AuraContext {
-    world: {
-        query: (...components: unknown[]) => Map<number, unknown[]>;
-        insert: (entityId: number, components: Record<string, unknown>) => void;
-        despawn: (entityId: number) => void;
-    };
-    isLocalPlayer: boolean;
-    getPlatformInputVector: () => SafeVector3Value;
-    getBaseSpeed: (archetypeId: string) => number;
-    inputDispatcher: {
-        fireAccelerationHeartbeat: (velocity: SafeVector3Value) => void;
-    };
-}
+${tsMovementRules}
+${tsSpawnRules}
+${tsDamageRules}
+${tsGlobalMocks}
 `;

@@ -1,6 +1,6 @@
 import { ArchetypeComponent, VelocityComponent, CFrameComponent, WeaponStateComponent, HealthComponent, ExplosionTriggerComponent } from "../../shared/components.types";
 
-// Создаем строгие локальные интерфейсы для математических формул линтера rbxtsc
+
 interface SafePosition {
     X: number;
     Y: number;
@@ -20,7 +20,6 @@ interface SafeVector3Value {
     mul: (scalar: number) => SafeVector3Value;
 }
 
-// Переопределяем типы полей value внутри систем, чтобы линтер видел в них числа, а не any!
 declare global {
     interface CFrameComponent {
         value: SafeCFrameValue;
@@ -30,10 +29,16 @@ declare global {
         value: SafeVector3Value;
         angular: SafeVector3Value;
     }
+}
+
+// Изолировано в общем контуре
+
+declare global {
     interface DamageComponent {
-        value: number | string; // <=== БЕРЕЖНО ДОБАВЛЕНА ПОДДЕРЖКА СТРОК И ЧИСЕЛ
+        value: number | string;
     }
 }
+
 
 declare const game: unknown;
 declare const Enum: unknown;
@@ -45,12 +50,15 @@ declare const math: {
 declare function warn(...args: unknown[]): void;
 declare function print(...args: unknown[]): void;
 
+interface AuraWorldContext {
+    spawn: () => number;
+    query: (...components: unknown[]) => Map<number, unknown[]>;
+    insert: (entityId: number, components: Record<string, unknown>) => void;
+    despawn: (entityId: number) => void;
+}
+
 interface AuraContext {
-    world: {
-        query: (...components: unknown[]) => Map<number, unknown[]>;
-        insert: (entityId: number, components: Record<string, unknown>) => void;
-        despawn: (entityId: number) => void;
-    };
+    world: AuraWorldContext;
     isLocalPlayer: boolean;
     getPlatformInputVector: () => SafeVector3Value;
     getBaseSpeed: (archetypeId: string) => number;
@@ -58,6 +66,9 @@ interface AuraContext {
         fireAccelerationHeartbeat: (velocity: SafeVector3Value) => void;
     };
 }
+
+
+import { ENEMY_INTERCEPTOR, GALAXY_PLAYER, PLASMA_BOLT, ALIENS, HUMANS, NEUTRAL } from "../../shared/constants";
 
 export class EnemyAiSystem {
     constructor() { }
