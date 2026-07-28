@@ -8,11 +8,11 @@
     "src/server/systems/CollisionSystem.ts": [
         "ecs_galaxy_collision_v1"
     ],
-    "src/server/systems/CleanerSystem.ts": [
-        "ecs_galaxy_cleaner_v1"
-    ],
     "src/server/systems/MovementSystem.ts": [
         "ecs_move_02_v1"
+    ],
+    "src/server/systems/CleanerSystem.ts": [
+        "ecs_galaxy_cleaner_v1"
     ],
     "src/server/systems/WeaponTimerSystem.ts": [
         "ecs_galaxy_weapon_timer_v1"

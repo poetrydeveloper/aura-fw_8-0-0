@@ -1,5 +1,5 @@
 {
-	"name": "NecromancerRoguelite",
+	"name": "Galaxy",
 	"globIgnorePaths": ["**/package.json", "**/tsconfig.json"],
 	"tree": {
 		"$className": "DataModel",
