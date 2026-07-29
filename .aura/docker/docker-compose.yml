@@ -1,7 +1,7 @@
 name: aura-7
 
 services:
-  # 1. Графовая СУБД Memgraph (Чистый, стабильный запуск без капризных флагов)
+  # 1. Графовая СУБД Memgraph (Глушим логи до уровня WARNING)
   memgraph:
     image: memgraph/memgraph-mage:latest
     container_name: aura7_memgraph
@@ -9,25 +9,28 @@ services:
       - "7687"
     volumes:
       - aura7_mg_data:/var/lib/memgraph
+    command: ["--log-level=WARNING"]
     networks:
       - aura7_network
 
-  # 2. Веб-интерфейс Memgraph Lab (Безопасный внешний порт)
+  # 2. Веб-интерфейс Memgraph Lab (Глушим предупреждения)
   memgraph_lab:
     image: memgraph/lab:latest
     container_name: aura7_memgraph_lab
     ports:
       - "47701:3000"
+    environment:
+      - LOG_LEVEL=error
     depends_on:
       - memgraph
     networks:
       - aura7_network
 
-  # 🚀 ЛЕГКОВЕСНЫЙ REACT-ФРОНТЕНД ВИЗУАЛИЗАЦИИ ДЕРЕВА ПРОЕКТА v39.0
+  # 🚀 REACT-ФРОНТЕНД С АВТО-СКАНЕРОМ ЦЕЛОСТНОСТИ ФАЙЛОВ
   frontend:
     image: node:20-alpine
     container_name: aura7_frontend
-    working_dir: /app/.aura/services/frontend # <=== ЖЕСТКИЙ УКАЗАТЕЛЬ КОРНЯ ДЛЯ VITE
+    working_dir: /app/.aura/services/frontend
     expose:
       - "3000"
     volumes:
@@ -37,12 +40,21 @@ services:
       - aura7_network
     depends_on:
       - memgraph
-    command: sh -c "echo '=== АКТИВАЦИЯ КОНТУРА ФРОНТЕНДА AURA_MAP ===' && npm install && npm run dev -- --host"
-  # 3. Модульное ядро Ткача (Порт 5000 полностью скрыт от Windows сокетов)
+    command: >
+      sh -c "
+        echo '🔍 [Scan Frontend] Проверка целостности зависимостей...';
+        if [ ! -f node_modules/.bin/vite ]; then
+          echo '🚨 ПАКЕТЫ ПОВРЕЖДЕНЫ ИЛИ ОТСУТСТВУЮТ! Восстановление контура...';
+          npm install --prefer-offline --no-audit --no-fund;
+        fi;
+        npm run dev -- --host --logLevel silent
+      "
+
+  # 🚀 ЯДРО ТКАЧА С АВТО-СКАНЕРОМ ЦЕЛОСТНОСТИ ФАЙЛОВ (ВЫРАВНЕНЫ ПУТИ)
   weaver_backend:
     image: node:20-alpine
     container_name: aura7_weaver_backend
-    working_dir: /app
+    working_dir: /app/.aura/services/core
     expose:
       - "5000"
     volumes:
@@ -52,9 +64,17 @@ services:
       - aura7_network
     depends_on:
       - memgraph
-    command: sh -c "echo '=== АКТИВАЦИЯ КОНТУРА AURA_7 БЕЗ КЭША ===' && ls -la /app && cd /app/.aura/services/core && npm install && rm -rf dist && npx ts-node src/index.ts"
+    command: >
+      sh -c "
+        echo '🔍 [Scan Weaver] Проверка целостности зависимостей...';
+        if [ ! -d node_modules/express ]; then
+          echo '🚨 ПАКЕТЫ ТКАЧА ПОВРЕЖДЕНЫ ИЛИ ОТСУТСТВУЮТ! Восстановление контура...';
+          npm install --prefer-offline --no-audit --no-fund;
+        fi;
+        rm -rf dist && npx ts-node --transpile-only src/index.ts
+      "
 
-  # 4. Шлюз Nginx (Внешний шлюз на безопасном порту 47788)
+  # 4. Шлюз Nginx (Глушим логи доступа, оставляем только критические ошибки)
   nginx:
     image: nginx:alpine
     container_name: aura7_nginx_gateway
@@ -62,14 +82,15 @@ services:
       - "47788:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ../../:/app # <=== СНАЙПЕРСКИЙ ПРОБРОС КОРНЯ ПРОЕКТА ДЛЯ API /MAP
+      - ../../:/app
+    command: /bin/sh -c "nginx -g 'daemon off; error_log /dev/stderr error;'"
     networks:
       - aura7_network
     depends_on:
       - weaver_backend
       - frontend
 
-  # 🚀 5. АВТО-ОПОВЕЩАТЕЛЬ ГОТОВНОСТИ КОНТУРА (Добавлен контроль фронтенда)
+  # 🚀 5. ИНТЕЛЛЕКТУАЛЬНЫЙ ТЕРМИНАЛ ПРОГРЕССА ГОТОВНОСТИ КОНТУРА (0% - 100%)
   readiness_checker:
     image: alpine:latest
     container_name: aura7_readiness_checker
@@ -81,14 +102,22 @@ services:
       - frontend
     command: >
       sh -c "
-        echo '⏳ Ожидание полной initialization сетевых портов, базы данных и фронтенда...';
-        while ! mknod /tmp/pipe p 2>/dev/null; do sleep 0.5; done;
-        until nc -w 1 memgraph 7687 2>/dev/null; do sleep 1; done;
-        until nc -w 1 frontend 3000 2>/dev/null; do sleep 1; done;
-        until nc -w 1 nginx 80 2>/dev/null; do sleep 1; done;
+        while ! mknod /tmp/pipe p 2>/dev/null; do sleep 0.1; done;
+        echo '🚀 [ 0%] Запуск сканирования... Ожидание готовности сетевой матрицы Аура 7...';
+        
+        until nc -w 1 memgraph 7687 2>/dev/null; do sleep 0.5; done;
+        echo '📡 [ 25%] ГРАФОВАЯ СУБД МЕMGRAPH УСПЕШНО ОТКРЫЛА ПОРТ 7687!';
+        
+        until nc -w 1 frontend 3000 2>/dev/null; do sleep 0.5; done;
+        echo '🪐 [ 50%] REACTFLOW-ФРОНТЕНД СТАБИЛИЗИРОВАЛ СЕТЕВОЙ ПОРТ 3000!';
+        
+        until nc -w 1 nginx 80 2>/dev/null; do sleep 0.5; done;
+        echo '⚡ [ 75%] ШЛЮЗ NGINX УСПЕШНО СМАРШРУТИЗИРОВАЛ ВНЕШНИЙ ПОРТ 80!';
+        
+        sleep 1;
         echo '=========================================================';
-        echo '🔥 [AURA_7 SYSTEM CHECK] ВСЕ КОНТЕЙНЕРЫ И БАЗА УСПЕШНО ПОДНЯТЫ!';
-        echo '🚀 КОНТУР ГОТОВ К ПРИЕМУ ПАКЕТОВ ДНК. МОЖНО ЗАПУСКАТЬ ТРАНСПОРТ!';
+        echo '🔥 [100%] [SPEEDRUN READY] КОНТУР УСПЕШНО ИГГДРАСИЛЬ-СТАБИЛИЗИРОВАН!';
+        echo '🚀 ВСЕ СЕРВИСЫ ОК. СКОБКИ СОШЛИСЬ. ПУЛЯЙ ТРАНСПОРТ 13 РАКУШЕК!';
         echo '=========================================================';
       "
 

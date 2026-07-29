@@ -38,3 +38,5 @@ docker compose up --build --force-recreate
 
 из папки роджо
 ./rojo.exe serve C:/repos/aura-fw_8-0-0/default.project.json
+
+http://localhost:47788
