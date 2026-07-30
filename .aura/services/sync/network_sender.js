@@ -1,34 +1,31 @@
-import http from 'http';
+import { execSync } from 'child_process';
 
 /**
- * 🛰️ ИЗОЛИРОВАННЫЙ СЕТЕВОЙ ТРАНСПОРТ
- * Стреляет строго в безопасный верхний порт шлюза Nginx AURA_7 (47788)
+ * 🛰️ СИНХРОННЫЙ БЛОКИРУЮЩИЙ ТРАНСПОРТ v38.8 (УНИЧТОЖИТЕЛЬ ГОНКИ)
+ * Останавливает поток выполнения CLI до полного ответа бэкенда.
  */
 export function sendPayloadToGateway(payloadObj, fileBaseName) {
     const payloadData = JSON.stringify(payloadObj);
-    const options = {
-        hostname: 'localhost',
-        port: 47788,
-        path: '/api/sync-shell',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(payloadData)
-        }
-    };
+    
+    // Экранируем JSON для безопасной передачи через аргументы CLI cURL (защита от поломки кавычек на Windows Bash)
+    const escapedPayload = payloadData.replace(/"/g, '\\"');
 
-    const req = http.request(options, (res) => {
-        let resBody = '';
-        res.on('data', (chunk) => resBody += chunk);
-        res.on('end', () => {
-            console.log(`| ✔ СИНХРОНИЗАЦИЯ ["${fileBaseName}"] ➔ Статус шлюза: ${res.statusCode} | Ответ: ${resBody}`);
-        });
-    });
+    // Формируем жесткую, нативную команду cURL для блокирующего выполнения
+    const curlCommand = `curl -s -X POST http://localhost:47788/api/sync-shell ` +
+                        `-H "Content-Type: application/json" ` +
+                        `-d "${escapedPayload}"`;
 
-    req.on('error', (err) => {
-        console.error(`| ❌ СБОЙ СЕТИ на шлюзе 47788 для ракушки ["${fileBaseName}"]:`, err.message);
-    });
-
-    req.write(payloadData);
-    req.end();
+    try {
+        console.log(`| 🔄 ОТПРАВКА ["${fileBaseName}"] ➔ Ожидание завершения транзакции...`);
+        
+        // Синхронный блокирующий вызов. Поток хоста ждет здесь!
+        const responseBuffer = execSync(curlCommand);
+        const responseBody = responseBuffer.toString('utf8');
+        
+        console.log(`| ✔ СИНХРОНИЗАЦИЯ ["${fileBaseName}"] ➔ Успешно обработано. Ответ ядра: ${responseBody}`);
+    } catch (err) {
+        console.error(`| ❌ КРИТИЧЕСКИЙ СБОЙ СИНХРОННОГО ДЕПЛОЯ для ["${fileBaseName}"]:`, err.stderr ? err.stderr.toString() : err.message);
+        // Жестко останавливаем весь конвейер, если транзакция упала, предотвращая порчу последующих файлов
+        process.exit(1);
+    }
 }

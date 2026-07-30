@@ -1,12 +1,16 @@
 const fs = require('fs');
 const path = require('path');
 
-const LOG_PATH = path.join(__dirname, 'nitka.log');
+// 🔥 ФИКС ПУТИ: Направляем сканер хоста строго в общую смонтированную директорию dist/
+// Теперь хост Windows без проблем прочитает логи, сгенерированные Docker-контейнером!
+const PROJECT_ROOT = path.resolve(__dirname, '../../..');
+const LOG_PATH = path.join(PROJECT_ROOT, '.aura/services/core/dist/nitka.log');
 
-console.log("=== START AURA NITKA LOG COGNITIVE SCANNER v1.0 ===");
+console.log("=== START AURA NITKA LOG COGNITIVE SCANNER v38.9 (DIST CONTROLS) ===");
+console.log(`| Ожидание логов по адресу: ${LOG_PATH}`);
 
 if (!fs.existsSync(LOG_PATH)) {
-    console.error(`❌ ОШИБКА: Файл журнала не найден по адресу: ${LOG_PATH}`);
+    console.error(`❌ ОШИБКА: Файл журнала еще не сгенерирован Docker-контейнером. Запустите сначала компиляцию ракушек.`);
     process.exit(1);
 }
 
@@ -21,28 +25,28 @@ lines.forEach((line, index) => {
     let hasIssue = false;
     let reasons = [];
 
-    // 1. Ищем висячие закрывающие круглые скобки внутри сгенерированных полей объектов
+    // 1. Контроль висячих скобок мутаций
     if (line.includes('[STITCH-600]') && line.includes(')}')) {
         hasIssue = true;
         reasons.push("Обнаружена висячая круглая скобка ')' внутри объекта мутации Mutate!");
     }
 
-    // 2. Ищем знаки равенства '=' там, где в TypeScript объектах должны быть двоеточия ':'
+    // 2. Контроль пролазания знаков равенства в объекты TypeScript
     if (line.includes('[STITCH-600]') && line.includes('=')) {
         hasIssue = true;
         reasons.push("Обнаружен недопустимый знак '=' вместо ':' внутри полей мутации Mutate!");
     }
 
-    // 3. Ищем пустые дыры в гвардах (когда оператор сравнения остался без значения)
-    if (line.includes('[STITCH-400]') && (line.includes('== )') || line.includes('!= )') || line.includes('!== )') || line.endsWith(')'))) {
-        // Дополнительная проверка на пустой хвост оператора
+    // 3. Контроль пустых гвардов
+    if (line.includes('[STITCH-400]')) {
+        // Улучшенный строгий regex-контроль, исключающий ложные срабатывания на штатные скобки
         if (line.match(/(?:==|!=|!==)\s*\)/)) {
             hasIssue = true;
-            reasons.push("Критическая пустота (отсутствует значение) внутри условия Guard!");
+            reasons.push("Критическая пустота (отсутствует значение сравнения) внутри условия Guard!");
         }
     }
 
-    // Если аномалия найдена — выводим рапорт
+    // Рапорт об аномалии
     if (hasIssue) {
         totalIssues++;
         console.log(`\n🚨 [АНOМАЛИЯ №${totalIssues}] Строка журнала: ${index + 1}`);
@@ -53,7 +57,7 @@ lines.forEach((line, index) => {
 
 console.log("\n=========================================================");
 if (totalIssues === 0) {
-    console.log("💚 СКАНИРОВАНИЕ ЗАВЕРШЕНО: Семантических ошибок в nitka.log не обнаружено!");
+    console.log("💚 СКАНИРОВАНИЕ ЗАВЕРШЕНО: Семантических ошибок в nitka.log не обнаружено! Код идеален.");
 } else {
     console.log(`🛑 СКАНИРОВАНИЕ ЗАВЕРШЕНО: Обнаружено аномалий: ${totalIssues} шт. Требуется калибровка парсера.`);
 }

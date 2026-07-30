@@ -26,31 +26,7 @@ services:
     networks:
       - aura7_network
 
-  # 🚀 REACT-ФРОНТЕНД С АВТО-СКАНЕРОМ ЦЕЛОСТНОСТИ ФАЙЛОВ
-  frontend:
-    image: node:20-alpine
-    container_name: aura7_frontend
-    working_dir: /app/.aura/services/frontend
-    expose:
-      - "3000"
-    volumes:
-      - ../../:/app
-      - /app/.aura/services/frontend/node_modules
-    networks:
-      - aura7_network
-    depends_on:
-      - memgraph
-    command: >
-      sh -c "
-        echo '🔍 [Scan Frontend] Проверка целостности зависимостей...';
-        if [ ! -f node_modules/.bin/vite ]; then
-          echo '🚨 ПАКЕТЫ ПОВРЕЖДЕНЫ ИЛИ ОТСУТСТВУЮТ! Восстановление контура...';
-          npm install --prefer-offline --no-audit --no-fund;
-        fi;
-        npm run dev -- --host --logLevel silent
-      "
-
-  # 🚀 ЯДРО ТКАЧА С АВТО-СКАНЕРОМ ЦЕЛОСТНОСТИ ФАЙЛОВ (ВЫРАВНЕНЫ ПУТИ)
+  # 🚀 3. ЯДРО ТКАЧА (ГЛАВНЫЙ КОНТЕЙНЕР — УПРАВЛЯЕТ ОЧЕРЕДЬЮ СБОРКИ)
   weaver_backend:
     image: node:20-alpine
     container_name: aura7_weaver_backend
@@ -73,8 +49,41 @@ services:
         fi;
         rm -rf dist && npx ts-node --transpile-only src/index.ts
       "
+    # Элегантно тушим гонку: этот блок гарантирует, что бэкенд завершит npm install до старта фронтенда
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z localhost 5000"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+      start_period: 5s
+  # 🚀 4. REACT-ФРОНТЕНД (ЖДЕТ СТАБИЛИЗАЦИИ БЭКЕНДА)
+  frontend:
+    image: node:20-alpine
+    container_name: aura7_frontend
+    working_dir: /app/.aura/services/frontend
+    expose:
+      - "3000"
+    volumes:
+      - ../../:/app
+      - /app/.aura/services/frontend/node_modules
+    networks:
+      - aura7_network
+    depends_on:
+      memgraph:
+        condition: service_started
+      weaver_backend:
+        condition: service_healthy # Намертво блокирует старт, пока бэкенд занят npm install
+    command: >
+      sh -c "
+        echo '🔍 [Scan Frontend] Проверка целостности зависимостей...';
+        if [ ! -f node_modules/.bin/vite ]; then
+          echo '🚨 ПАКЕТЫ ПОВРЕЖДЕНЫ ИЛИ ОТСУТСТВУЮТ! Восстановление контура...';
+          npm install --prefer-offline --no-audit --no-fund;
+        fi;
+        npm run dev -- --host --logLevel silent
+      "
 
-  # 4. Шлюз Nginx (Глушим логи доступа, оставляем только критические ошибки)
+  # 5. Шлюз Nginx (Глушим логи доступа, оставляем только критические ошибки)
   nginx:
     image: nginx:alpine
     container_name: aura7_nginx_gateway
@@ -90,7 +99,7 @@ services:
       - weaver_backend
       - frontend
 
-  # 🚀 5. ИНТЕЛЛЕКТУАЛЬНЫЙ ТЕРМИНАЛ ПРОГРЕССА ГОТОВНОСТИ КОНТУРА (0% - 100%)
+  # 🚀 6. ИНТЕЛЛЕКТУАЛЬНЫЙ ТЕРМИНАЛ ПРОГРЕССА ГОТОВНОСТИ (С ЗАЩИТОЙ ОТ ЗАВИСАНИЯ)
   readiness_checker:
     image: alpine:latest
     container_name: aura7_readiness_checker
@@ -105,13 +114,19 @@ services:
         while ! mknod /tmp/pipe p 2>/dev/null; do sleep 0.1; done;
         echo '🚀 [ 0%] Запуск сканирования... Ожидание готовности сетевой матрицы Аура 7...';
         
-        until nc -w 1 memgraph 7687 2>/dev/null; do sleep 0.5; done;
+        # Безопасный опрос Memgraph (макс. 40 попыток ~20 секунд)
+        TRY=0; until nc -w 1 memgraph 7687 2>/dev/null || [ \$TRY -eq 40 ]; do sleep 0.5; TRY=\$((TRY+1)); done;
+        if [ \$TRY -eq 40 ]; then echo '🚨 КРИТИЧЕСКИЙ СБОЙ: Memgraph не ответил!'; exit 1; fi;
         echo '📡 [ 25%] ГРАФОВАЯ СУБД МЕMGRAPH УСПЕШНО ОТКРЫЛА ПОРТ 7687!';
         
-        until nc -w 1 frontend 3000 2>/dev/null; do sleep 0.5; done;
+        # Безопасный опрос Frontend (макс. 120 попыток ~60 секунд)
+        TRY=0; until nc -w 1 frontend 3000 2>/dev/null || [ \$TRY -eq 120 ]; do sleep 0.5; TRY=\$((TRY+1)); done;
+        if [ \$TRY -eq 120 ]; then echo '🚨 КРИТИЧЕСКИЙ СБОЙ: Frontend не запустился!'; exit 1; fi;
         echo '🪐 [ 50%] REACTFLOW-ФРОНТЕНД СТАБИЛИЗИРОВАЛ СЕТЕВОЙ ПОРТ 3000!';
         
-        until nc -w 1 nginx 80 2>/dev/null; do sleep 0.5; done;
+        # Безопасный опрос Nginx (макс. 40 попыток ~20 секунд)
+        TRY=0; until nc -w 1 nginx 80 2>/dev/null || [ \$TRY -eq 40 ]; do sleep 0.5; TRY=\$((TRY+1)); done;
+        if [ \$TRY -eq 40 ]; then echo '🚨 КРИТИЧЕСКИЙ СБОЙ: Шлюз Nginx недоступен!'; exit 1; fi;
         echo '⚡ [ 75%] ШЛЮЗ NGINX УСПЕШНО СМАРШРУТИЗИРОВАЛ ВНЕШНИЙ ПОРТ 80!';
         
         sleep 1;

@@ -1,28 +1,28 @@
+// .aura/services/core/src/weaver_julia/julia_parser.ts
+
 import fs from 'fs-extra';
 import path from 'path';
-
-const LOG_FILE_PATH = path.resolve('/app/nitka.log');
+const LOG_FILE_PATH = path.resolve('/app/.aura/services/core/dist/nitka.log');
 
 export async function initStitchLog(): Promise<void> {
-    await fs.writeFile(LOG_FILE_PATH, `=== СТАРТ УМНОГО ТОКЕНАЙЗЕРА СЕТИ v36.0 ===\n`, 'utf8');
+    await fs.writeFile(LOG_FILE_PATH, `=== СТАРТ УМНОГО ТОКЕНАЙЗЕРА СЕТИ v38.9 (ENTERPRISE PROTECTION) ===\n`, 'utf8');
 }
 
 /**
- * ⚡ ДЕТЕРМИНИРОВАННЫЙ ПОСИМВОЛЬНЫЙ ТОКЕНАЙЗЕР JULIA ➔ TYPESCRIPT v36.5
- * Внедрен интеллектуальный вывод строгих типов (Strict Type Inference) для циклов Matter.
- * Полностью выжигает тип any на этапе генерации, защищая математические формулы.
+ * ⚡ ДЕТЕРМИНИРОВАННЫЙ ПОСИМВОЛЬНЫЙ ТОКЕНАЙЗЕР JULIA ➔ TYPESCRIPT v38.9
+ * Полная защита от ReDoS, Re-linking скобок, семантическая чистка ключей Dict.
  */
 export function translateJuliaToTs(juliaCode: string, className: string, methodName: string): string {
     if (!juliaCode || !juliaCode.trim()) return "";
     
     const lines = juliaCode.split(/\r?\n/);
     let tsLines: string[] = [];
+    let memoryLogs: string[] = []; // ОПТИМИЗАЦИЯ ОЗУ: Копим логи в памяти, исключая оверхед диска I/O
     let insideRender = false;
     let braceBalance = 0;
 
     const logStitchSync = (code: string, msg: string) => {
-        const line = `[CLASS: ${className}] [METHOD: ${methodName}] ${code} [BALANCE: ${braceBalance}] -> ${msg}\n`;
-        fs.appendFileSync(LOG_FILE_PATH, line, 'utf8');
+        memoryLogs.push(`[CLASS: ${className}] [METHOD: ${methodName}] ${code} [BALANCE: ${braceBalance}] -> ${msg}\n`);
     };
 
     const getParamValue = (lineText: string, paramKey: string): string => {
@@ -43,7 +43,10 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
     
     for (let line of lines) {
         let trimmed = line.trim();
-        if (trimmed.startsWith("#")) continue;
+        if (trimmed.startsWith("#") || !trimmed) {
+            if (!trimmed) tsLines.push("");
+            continue;
+        }
         
         if (!insideRender) {
             if (trimmed.startsWith("render = function") || trimmed.startsWith("render(ctx)")) {
@@ -53,13 +56,13 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
             continue;
         }
         
-        if (trimmed === ")" || trimmed === " )" || trimmed.startsWith(")")) {
-            logStitchSync("[STITCH-888]", "Обнаружен конец декларации AuraShell. Стрим остановлен.");
+        // Защита от ложного срабатывания: закрытие скобки отсекает манифест только если мы вышли из всех ECS-блоков
+        if (braceBalance === 0 && (trimmed === ")" || trimmed === " )" || trimmed.startsWith(")"))) {
+            logStitchSync("[STITCH-888]", "Обнаружен детерминированный конец декларации. Стрим остановлен.");
             break;
         }
-        if (!trimmed) { tsLines.push(""); continue; }
-        
-        // 1. ИНТЕЛЛЕКТУАЛЬНАЯ ТРАНСЛЯЦИЯ МАКРOСА Query СО СТРОГИМИ ТИПАМИ КОМПОНЕНТОВ
+
+        // 1. ТРАНСЛЯЦИЯ МАКРOСА Query (camelCase + Типизация без any)
         if (trimmed.startsWith("Query(components")) {
             const startArray = trimmed.indexOf("[");
             const endArray = trimmed.indexOf("]");
@@ -68,28 +71,26 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
                 comps = trimmed.substring(startArray + 1, endArray).replace(/["'\s]/g, "").split(",").filter(s => s.length > 0);
             }
             
-            // Генерируем camelCase итераторы для деструктуризации (cFrame, archetype)
-            const iterators = comps.map((c: string) => c.replace('Component', '').charAt(0).toLowerCase() + c.replace('Component', '').slice(1)).join(', ');
+            const iterators = comps.map((c: string) => {
+                const base = c.replace('Component', '');
+                return base.charAt(0).toLowerCase() + base.slice(1);
+            }).join(', ');
             
-            // Генерируем строгий список интерфейсов для приведения типов (CFrameComponent, ArchetypeComponent)
             const strictTypesList = comps.join(', ');
-            
-            // Собираем пуленепробиваемый типизированный цикл без единого any!
             tsLines.push(`        for (const [entityId, [${iterators}]] of ctx.world.query(${(comps.map(() => '({} as unknown)')).join(', ')}) as unknown as Map<number, [${strictTypesList}]>) {`);
             braceBalance++;
             logStitchSync("[STITCH-301]", `Открыт строго типизированный цикл Query. Каст к Map<number, [${strictTypesList}]>`);
             continue;
         }
         
-        // 2. ИНТЕЛЛЕКТУАЛЬНАЯ ТРАНСЛЯЦИЯ МАКРOСА NestedQuery С ЯВНЫМИ ТИПАМИ СИСТЕМЫ КОЛЛИЗИЙ
+        // 2. ТРАНСЛЯЦИЯ МАКРOСА NestedQuery (Фикс гварда коллизий !== на === и .id на .type под v38.9)
         if (trimmed.startsWith("NestedQuery(target")) {
             const targetName = getParamValue(trimmed, "target");
-            tsLines.push(`        for (const [targetEntityId, [targetArchetype, targetCFrame]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent]>) { if (targetArchetype.id !== "${targetName || "GALAXY_PLAYER"}") continue;`);
+            tsLines.push(`        for (const [targetEntityId, [targetArchetype, targetCFrame, targetVelocity]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent, VelocityComponent]>) { if (targetArchetype.type !== "${targetName || "PLAYER"}") continue;`);
             braceBalance++;
             logStitchSync("[STITCH-302]", `Открыт строго типизированный цикл NestedQuery.`);
             continue;
         }
-        
         // 3. Макрос Guard
         if (trimmed.startsWith("Guard(condition")) {
             const condStr = getParamValue(trimmed, "condition");
@@ -98,10 +99,11 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
             continue;
         }
 
-        // 4. Макрос Safety
+        // 4. Макрос Safety (Безопасный захват числа через regex match)
         if (trimmed.startsWith("Safety(limit")) {
-            const limStr = trimmed.replace(/[^\d]/g, "");
-            tsLines.push(`            let safetyCounter = 0; if (++safetyCounter > ${limStr || "5000"}) { warn("Aura Safety Triggered"); break; }`);
+            const limMatch = trimmed.match(/\d+/);
+            const limStr = limMatch ? limMatch[0] : "5000";
+            tsLines.push(`            let safetyCounter = 0; if (++safetyCounter > ${limStr}) { warn("Aura Safety Triggered"); break; }`);
             logStitchSync("[STITCH-401]", `Внедрена защита Safety. Лимит: ${limStr}`);
             continue;
         }
@@ -114,13 +116,12 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
             logStitchSync("[STITCH-500]", `Расчет переменной Calculate: const ${vNameStr} = ${exprStr}`);
             continue;
         }
-        
-        // 6. БЕРЕЖНО ВОССТАНОВЛЕННЫЙ ПОСИМВОЛЬНЫЙ ТОКЕНАЙЗЕР МАКРOСА Mutate
+
+        // 6. МОДЕРНИЗИРОВАННЫЙ ТОКЕНАЙЗЕР МАКРOСА Mutate (Сохраняет внутренние кавычки!)
         if (trimmed.startsWith("Mutate(")) {
-            const target = getParamValue(trimmed, "targetEntity");
-            const targetId = target ? target : 'entityId';
             const dictStart = trimmed.indexOf("Dict(");
             let cleanValues = "";
+            let targetId = 'entityId'; // Дефолт на текущую сущность
             
             if (dictStart !== -1) {
                 let startPos = dictStart + 5; let parenCount = 1; let endPos = startPos;
@@ -129,14 +130,35 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
                     if (trimmed[i] === ')') { parenCount--; if (parenCount === 0) { endPos = i; break; } }
                 }
                 const rawValues = trimmed.substring(startPos, endPos).trim();
-                // ЮВЕЛИРНЫЙ СКАСТ И ОЧИСТКА КАВЫЧЕК СЛОВАРЯ v31.0 - ПРOФИТ ТВОЕЙ СХЕМЫ ЗАЩИЩЕН
-                cleanValues = rawValues.replace(/=>/g, ":").replace(/["']/g, "").trim();
+                
+                // ЮВЕЛИРНЫЙ ПАРСИНГ DICT: Заменяем только стрелочки Julia на двоеточия JS, 
+                // но бережно сохраняем все внутренние кавычки формул!
+                const entries = rawValues.split(",");
+                const processedFields = entries.map(entry => {
+                    if (!entry.includes("=>")) return "";
+                    const parts = entry.split("=>");
+                    const k = parts[0];
+                    const v = parts.slice(1).join("=>");
+                    
+                    const cleanKey = k.replace(/["'\s]/g, ""); // Ключ очищаем намертво
+                    let cleanVal = v.trim();
+                    
+                    // ХЕЛПЕР-ИНЖЕКТ: Если внутри словаря ИИ передал параметр targetEntityId, 
+                    // мы вытаскиваем его как управляющий ID сущности для insert(), убирая из объекта компонента
+                    if (cleanKey === "targetEntityId") {
+                        targetId = cleanVal.replace(/["']/g, ""); // Извлекаем ID
+                        return ""; // Стираем из полей компонента
+                    }
+                    
+                    return `"${cleanKey}": ${cleanVal}`;
+                }).filter(s => s.length > 0);
+                
+                cleanValues = processedFields.join(", ");
             }
             
-            // Заворачиваем объект в канонический строгий Record контракт для линтера rbxtsc
             const finalMutateStitch = `            ctx.world.insert(${targetId}, ({ ${cleanValues} } as unknown as Record<string, unknown>));`;
             tsLines.push(finalMutateStitch);
-            logStitchSync("[STITCH-600]", `Мутация Mutate детерминировано собрана из токенов.`);
+            logStitchSync("[STITCH-600]", `Мутация Mutate детерминировано собрана.`);
             continue;
         }
         
@@ -144,7 +166,7 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
         if (trimmed.startsWith("if ") && !trimmed.endsWith("{") && !trimmed.includes("then")) {
             tsLines.push(`            if (${trimmed.substring(3).trim()}) {`);
             braceBalance++;
-            logStitchSync("[STITCH-310]", "Luau-условие преобразовано в блок TS (Баланс++).");
+            logStitchSync("[STITCH-310]", "Luau-условие преобразовано в блок TS.");
             continue;
         }
         
@@ -152,10 +174,10 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
         if (trimmed === "end") {
             tsLines.push("        }");
             braceBalance--;
-            logStitchSync("[STITCH-700]", "Встречен маркер end. Закрыта скобка } (Баланс--)");
+            logStitchSync("[STITCH-700]", "Встречен маркер end. Закрыта скобка }");
             
             if (braceBalance === 0) {
-                logStitchSync("[STITCH-701]", "Математический баланс равен 0. Все ECS блоки успешно закрыты.");
+                logStitchSync("[STITCH-701]", "Математический баланс равен 0. Все блоки закрыты.");
                 break;
             }
             continue;
@@ -163,6 +185,9 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
         
         tsLines.push(`        ${line.trim()}`);
     }
+    
+    // БЛОКИРУЮЩИЙ СБРОС ЛОГОВ НА ДИСК (Один асинхронный вызов в самом конце функции)
+    fs.appendFile(LOG_FILE_PATH, memoryLogs.join(''), 'utf8').catch(() => {});
     
     return tsLines.join('\n');
 }

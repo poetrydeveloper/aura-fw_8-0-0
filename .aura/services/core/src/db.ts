@@ -19,8 +19,14 @@ class MemgraphDatabase {
 
     constructor() {
         const uri = process.env.MEMGRAPH_URI || 'bolt://memgraph:7687';
-        this.driver = neo4j.driver(uri, neo4j.auth.basic('', ''));
-        console.log('[Memgraph DB] Драйвер успешно инициализирован.');
+        
+        // Внедряем жесткие таймауты на уровне конфигурации драйвера Bolt
+        this.driver = neo4j.driver(uri, neo4j.auth.basic('', ''), {
+            connectionTimeout: 5000,      // Макс. 5 секунд на установку TCP-соединения
+            maxConnectionLifetime: 60000, // Время жизни сокета в пуле — 60 секунд
+            connectionAcquisitionTimeout: 3000 // Макс. 3 секунды на получение сокета из пула Express-потоком
+        });
+        console.log('[Memgraph DB] Драйвер успешно инициализирован с таймаутами пула сокетов.');
     }
 
     /**
@@ -42,7 +48,7 @@ class MemgraphDatabase {
                 console.log('[Memgraph DB] Аппаратная защита уникальности версий (s.uid) успешно активирована.');
                 connected = true;
             } catch (error: any) {
-                if (error.message.includes('already exists') || error.message.includes('Exists')) {
+                if (error.message.includes('already exists') || error.message.includes('Exists') || error.code === 'Neo.ClientError.Schema.EquivalentSchemaRuleAlreadyExists') {
                     console.log('[Memgraph DB] Ограничения уникальности uid уже были созданы ранее.');
                     connected = true;
                     break;
@@ -60,6 +66,7 @@ class MemgraphDatabase {
             }
         }
     }
+
     /**
      * Атомарная транзакция: Создание мутации ракушки, AST-кода и перенос ребер графа (Memgraph Native)
      */
@@ -74,11 +81,11 @@ class MemgraphDatabase {
                     // Вычисляем следующую версию в графе
                     WITH oldS, COALESCE(oldS.version, 0) + 1 AS nextVersion
                     
-                    // СОЗДАЕМ ИММУТАБЕЛЬНУЮ НОДУ ЧЕРЕЗ CREATE С КОН КАТЕНИРОВАННЫМ КЛЮЧОМ UID
+                    // СОЗДАЕМ ИММУТАБЕЛЬНУЮ НОДУ ЧЕРЕЗ ФУНКЦИЮ CONCAT (Исправлен баг сложения строк оператором +)
                     CREATE (newS:Shell {
                         id: $shellId, 
                         version: nextVersion,
-                        uid: $shellId + "_" + toString(nextVersion), // <=== НАШ АППАРАТНЫЙ ЩИТ УНИКАЛЬНОСТИ
+                        uid: concat([$shellId, "_", toString(nextVersion)]), 
                         status: "active",
                         ast_json: $astJson, 
                         subject: $subject, 
@@ -122,12 +129,13 @@ class MemgraphDatabase {
                         DELETE rPart
                     )
                     
-                    WITH oldS
                     // Депрекация старого предка в архивный карантин
+                    WITH oldS
                     FOREACH (_ IN [x IN [oldS] WHERE x IS NOT NULL] | 
                         SET oldS.status = "deprecated", oldS.deprecated_at = timestamp()
                     )
                 `;
+                
                 await tx.run(cypherQuery, {
                     shellId: payload.shell_id, subject: payload.subject, verb: payload.verb, object: payload.object,
                     astJson: payload.ast_json, className: payload.class_name, flameworkPattern: payload.flamework_pattern,
@@ -138,14 +146,17 @@ class MemgraphDatabase {
         } catch (error: any) {
             console.error(`[Memgraph DB Error] Сбой мутации "${payload.shell_id}":`, error.message);
             throw error;
-        } finally { await session.close(); }
+        } finally { 
+            await session.close(); 
+        }
     }
 
     /**
-     * Закрытие драйвера СУБД при выключении контейнера
+     * Закрытие драйвера СУБД при выключении контейнера (Graceful Shutdown)
      */
     public async close(): Promise<void> {
         await this.driver.close();
+        console.log('[Memgraph DB] Пул соединений успешно закрыт.');
     }
 }
 

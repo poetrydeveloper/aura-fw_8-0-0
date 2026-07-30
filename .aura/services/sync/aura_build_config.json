@@ -1,0 +1,5 @@
+{
+    "active_shells_dir": ".aura/services/shells/immutable-2",
+    "active_parser_module": "./shell_parser-2.cjs",
+    "network_transport_mode": "SYNCHRONOUS_BLOCKING"
+}
