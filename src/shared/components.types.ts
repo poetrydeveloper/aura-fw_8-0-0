@@ -18,6 +18,7 @@ export interface WeaponStateComponent {
     isCharging: boolean;
     nextTimer: number;
     ammoCapacity: number;
+    ammo: number;
 }
 
 export interface HealthComponent {

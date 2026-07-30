@@ -12,7 +12,10 @@
 		"aura-roblox-game:out/server/systems/HealthSystem@HealthSystem": "server/systems/HealthSystem@HealthSystem",
 		"aura-roblox-game:out/server/systems/EnemySpawnSystem@EnemySpawnSystem": "server/systems/EnemySpawnSystem@EnemySpawnSystem",
 		"aura-roblox-game:out/server/systems/ScoreRewardSystem@ScoreRewardSystem": "server/systems/ScoreRewardSystem@ScoreRewardSystem",
-		"aura-roblox-game:out/server/systems/ExplosionSystem@ExplosionSystem": "server/systems/ExplosionSystem@ExplosionSystem"
+		"aura-roblox-game:out/server/systems/ExplosionSystem@ExplosionSystem": "server/systems/ExplosionSystem@ExplosionSystem",
+		"aura-roblox-game:out/server/systems/UiScoreSystem@UiScoreSystem": "server/systems/UiScoreSystem@UiScoreSystem",
+		"aura-roblox-game:out/server/systems/GameOverSystem@GameOverSystem": "server/systems/GameOverSystem@GameOverSystem",
+		"aura-roblox-game:out/server/systems/DebrisSystem@DebrisSystem": "server/systems/DebrisSystem@DebrisSystem"
 	},
 	"metadata": {}
 }

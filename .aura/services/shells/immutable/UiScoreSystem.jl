@@ -24,8 +24,8 @@ AuraShell(
             Guard(condition = "archetype.id == GALAXY_PLAYER")
             Safety(limit = 10)
             
-            # Снайперское исправление: используем строгое валидное поле компонента из ДНК-паспорта
-            Calculate(var = "currentScore", expr = "weaponState.ammoLeft")
+            # Чистейший, канонический вызов без костылей!
+            Calculate(var = "currentScore", expr = "weaponState.ammo")
             
 if currentScore >= 0
                 print("[Aura UI] Интерфейс обновлен. Текущий счет галактической сессии: ", currentScore)

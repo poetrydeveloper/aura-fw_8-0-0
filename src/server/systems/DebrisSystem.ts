@@ -70,18 +70,28 @@ interface AuraContext {
 
 import { ENEMY_INTERCEPTOR, GALAXY_PLAYER, PLASMA_BOLT, ALIENS, HUMANS, NEUTRAL } from "../../shared/constants";
 
-export class UiScoreSystem {
+export class DebrisSystem {
     constructor() { }
 
-    public updateDisplay(ctx: AuraContext, deltaTime: number): void {
-        for (const [entityId, [archetype, weaponState]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, WeaponStateComponent]>) {
-            if (!(archetype.id === GALAXY_PLAYER)) { continue; }
-            let safetyCounter = 0; if (++safetyCounter > 10) { warn("Aura Safety Triggered"); break; }
+    public cleanGarbage(ctx: AuraContext, deltaTime: number): void {
+        for (const [entityId, [archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent]>) {
+            let safetyCounter = 0; if (++safetyCounter > 1000) { warn("Aura Safety Triggered"); break; }
 
-            const currentScore = weaponState.ammo;
+            const currentPos = cFrame.value.Position;
+            const archId = archetype.id;
 
-            if (currentScore >= 0) {
-                print("[Aura UI] Интерфейс обновлен. Текущий счет галактической сессии: ", currentScore)
+            if ((archId === PLASMA_BOLT)) {
+                if ((math.abs(currentPos.X) > 2000)) {
+                    ctx.world.despawn(entityId)
+                    print("[Aura Garbage] Снаряд выжжен из ОЗУ сервера по лимиту дистанции.")
+                }
+            }
+
+            if ((archId === ENEMY_INTERCEPTOR)) {
+                if ((math.abs(currentPos.X) > 3000)) {
+                    ctx.world.despawn(entityId)
+                    print("[Aura Garbage] Потерянный перехватчик удален из памяти для оптимизации.")
+                }
             }
         }
     }

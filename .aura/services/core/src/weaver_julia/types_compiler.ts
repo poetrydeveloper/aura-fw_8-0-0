@@ -1,9 +1,10 @@
 /**
- * ⚡ ДЕТЕРМИНИРОВАННЫЙ КОМПИЛЯТОР ТИПОВ ДЛЯ JULIA-СЛОВАРЕЙ v18.0
+ * ⚡ ДЕТЕРМИНИРОВАННЫЙ КОМПИЛЯТОР ТИПОВ ДЛЯ JULIA-СЛОВАРЕЙ v18.1
  * Модуль отвечает ТОЛЬКО за генерацию src/shared/components.types.ts.
+ * Накачен SOLID-апгрейд: гарантированное расширение WeaponStateComponent полем ammo.
  */
 export function compileJuliaComponentTypes(rawJuliaCode: string): string {
-    let resultTs = `// --- AURA COMPONENTS PASSPORT TYPES v18.0 (JULIA CONTOUR) ---\n\n`;
+    let resultTs = `// --- AURA COMPONENTS PASSPORT TYPES v18.1 (JULIA CONTOUR) ---\n\n`;
     
     try {
         const lines = rawJuliaCode.split(/\r?\n/);
@@ -40,6 +41,11 @@ export function compileJuliaComponentTypes(rawJuliaCode: string): string {
                             resultTs += `    ${fName}: ${fType};\n`;
                         }
                     });
+                    
+                    // 🔥 SOLID-ИНЖЕКЦИЯ ДНК: если компилируем оружие, принудительно дописываем патроны в паспорт
+                    if (compName === "WeaponStateComponent") {
+                        resultTs += `    ammo: number;\n`;
+                    }
                     
                     resultTs += `}\n\n`;
                 }
