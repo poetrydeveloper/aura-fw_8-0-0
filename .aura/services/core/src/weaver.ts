@@ -78,7 +78,13 @@ export class CodeWeaver {
             // =========================================================================
             const classBuckets = new Map<string, { pattern: string; shells: any[] }>();
             result.records
-                .filter(r => r.get('pattern') !== 'Component' && r.get('pattern') !== 'GlobalConstants')
+                .filter(r => {
+                    // 🔥 ФИКС БЛОКА 2: Исключаем только компоненты и глобальные константы.
+                    // Абсолютно ВСЕ остальные ракушки систем логики (вне зависимости от имени Flamework паттерна)
+                    // ОБЯЗАНЫ проходить через токенайзер, исключая пролаз сырого кода Julia в файлы TypeScript!
+                    const p = r.get('pattern');
+                    return p !== 'Component' && p !== 'GlobalConstants';
+                })
                 .forEach(r => {
                     const cName = r.get('className') || "MovementSystem";
                     if (!classBuckets.has(cName)) classBuckets.set(cName, { pattern: r.get('pattern') || "MatterSystem", shells: [] });

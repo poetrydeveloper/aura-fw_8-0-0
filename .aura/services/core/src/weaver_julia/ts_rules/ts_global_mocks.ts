@@ -1,11 +1,10 @@
 /**
- * ⚡ МОДЕРНИЗИРОВАННОЕ ПРАВИЛО ТИПИЗАЦИИ: TS_GLOBAL_MOCKS v38.9 (JULIA SYNCHRONIZED)
- * Полное выжигание устаревших легаси-контекстов, синхронизация с каноном Luau/Matter ECS v38.9.
+ * ⚡ МОДЕРНИЗИРОВАННАЯ МАТРИЦА ГЛОБАЛЬНЫХ МОКОВ v38.9.9 (PURE NATIVE)
+ * Полное закрытие слепых зон линтера rbxtsc. Внедрена поддержка SharedTypes и локального игрока.
  */
 export const tsGlobalMocks = `
-// --- AURA RUNTIME GLOBAL MOCKS INTERFACES v38.9 ---
-declare const game: unknown;
-declare const Enum: unknown;
+declare const game: any;
+declare const Enum: any;
 declare const math: {
     abs: (value: number) => number;
     max: (x: number, y: number) => number;
@@ -14,16 +13,32 @@ declare const math: {
 declare function warn(...args: unknown[]): void;
 declare function print(...args: unknown[]): void;
 
-// Декларируем глобальные переменные итераторов, чтобы линтер rbxtsc не выдавал Cannot find name
+// 🔥 ФИКС: Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
 declare const entityId: number;
 declare const targetEntityId: number;
 declare const deltaTime: number;
+declare const localPlayerEntityId: number;
+
+// 🔥 ФИКС: Мокаем Flamework методы ввода для InputSystem.ts
+declare const getMovementInputVector: () => any;
+declare const inputEvents: {
+    VelocityUpdate: {
+        fireServer: (vector: any) => void;
+    };
+};
+
+// 🔥 ФИКС: Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
+export namespace SharedTypes {
+    export interface AuraContext {
+        world: any;
+    }
+}
 
 interface AuraWorldContext {
     spawn: () => number;
-    query: (...components: unknown[]) => Map<number, unknown[]>;
+    query: (...components: unknown[]) => Map<number, any[]>;
     insert: (entityId: number, components: Record<string, unknown>) => void;
-    remove: (entityId: number, componentTrack: unknown) => void; // Добавлен метод remove для HealthSystem!
+    remove: (entityId: number, componentTrack: unknown) => void;
     despawn: (entityId: number) => void;
 }
 

@@ -85,7 +85,7 @@ class MemgraphDatabase {
                     CREATE (newS:Shell {
                         id: $shellId, 
                         version: nextVersion,
-                        uid: concat([$shellId, "_", toString(nextVersion)]), 
+                        uid: $shellId + "_" + toString(nextVersion), 
                         status: "active",
                         ast_json: $astJson, 
                         subject: $subject, 

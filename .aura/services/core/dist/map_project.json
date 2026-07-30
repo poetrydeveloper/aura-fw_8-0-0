@@ -1,47 +1,47 @@
 {
     "src/shared/constants.ts": [
-        "registry_galaxy_constants_v1"
+        "registry_galaxy_constants_v38_5"
     ],
     "src/shared/components.types.ts": [
-        "GalaxyArchetype"
+        "GalaxyArchetype_v38_5"
     ],
     "src/server/systems/CleanerSystem.ts": [
-        "ecs_galaxy_cleaner_v1"
+        "ecs_galaxy_cleaner_v38_5"
     ],
     "src/server/systems/CollisionSystem.ts": [
-        "ecs_galaxy_collision_v1"
+        "ecs_galaxy_collision_v38_5"
     ],
     "src/server/systems/DebrisSystem.ts": [
-        "registry_galaxy_debris_v1"
-    ],
-    "src/server/systems/EnemySpawnSystem.ts": [
-        "ecs_galaxy_spawn_v1"
+        "ecs_galaxy_debris_v38_5"
     ],
     "src/server/systems/EnemyAiSystem.ts": [
-        "ecs_galaxy_ai_v1"
+        "ecs_galaxy_ai_v38_5"
+    ],
+    "src/server/systems/EnemySpawnSystem.ts": [
+        "ecs_galaxy_spawn_v38_5"
     ],
     "src/server/systems/ExplosionSystem.ts": [
-        "ecs_galaxy_explosion_v1"
-    ],
-    "src/server/systems/HealthSystem.ts": [
-        "ecs_galaxy_health_v1"
+        "ecs_galaxy_explosion_v38_5"
     ],
     "src/server/systems/GameOverSystem.ts": [
-        "registry_galaxy_game_over_v1"
+        "ecs_galaxy_game_over_v38_5"
     ],
-    "src/server/systems/UiScoreSystem.ts": [
-        "registry_galaxy_ui_score_v1"
-    ],
-    "src/server/systems/ScoreRewardSystem.ts": [
-        "ecs_galaxy_score_v1"
-    ],
-    "src/server/systems/MovementSystem.ts": [
-        "ecs_move_02_v1"
+    "src/server/systems/HealthSystem.ts": [
+        "ecs_galaxy_health_v38_5"
     ],
     "src/server/systems/InputSystem.ts": [
-        "ctl_input_v1"
+        "ctl_input_v38_5"
+    ],
+    "src/server/systems/MovementSystem.ts": [
+        "ecs_galaxy_movement_v38_5"
+    ],
+    "src/server/systems/ScoreRewardSystem.ts": [
+        "ecs_galaxy_score_v38_5"
+    ],
+    "src/server/systems/UiScoreSystem.ts": [
+        "ecs_galaxy_ui_score_v38_5"
     ],
     "src/server/systems/WeaponTimerSystem.ts": [
-        "ecs_galaxy_weapon_timer_v1"
+        "ecs_galaxy_weapon_timer_v38_5"
     ]
 }

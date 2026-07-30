@@ -21,7 +21,7 @@ AuraShell(
     
     render = function(ctx)
         Query(components = ["ArchetypeComponent", "CFrameComponent"]) do
-            Safety(limit = 10); # Канон: Теперь строго первой строкой внутри do-блока
+            Safety(limit = 10); # Канон: Теперь строго первой строкой внутри цикла
             
             # Проверяем, является ли текущая сущность игроком. Если нет — пропускаем.
             Guard(condition = "archetype.type === 'PLAYER'"); 

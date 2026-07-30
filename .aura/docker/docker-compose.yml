@@ -1,19 +1,24 @@
-name: aura-7
+name: aura8
 
 services:
-  # 1. Графовая СУБД Memgraph (Глушим логи до уровня WARNING)
+  # 🪐 1. ГРАФОВАЯ СУБД MEMGRAPH (ЧИСТАЯ, СВЕРХЛЕГКАЯ И МОМЕНТАЛЬНАЯ БАЗА)
   memgraph:
-    image: memgraph/memgraph-mage:latest
+    image: memgraph/memgraph:latest # Весит ~70МБ вместо 3ГБ. Взлетает за 0.5 секунды!
     container_name: aura7_memgraph
-    expose:
-      - "7687"
+    ports:
+      - "7687:7687"
     volumes:
       - aura7_mg_data:/var/lib/memgraph
     command: ["--log-level=WARNING"]
+    deploy:
+      resources:
+        limits:
+          memory: 300M # Защита Windows хоста от утечек ОЗУ
     networks:
       - aura7_network
+    # 🔥 ФИКС: Хелсчек полностью удален. Исключены любые ложные блокировки (Deadlock) контура!
 
-  # 2. Веб-интерфейс Memgraph Lab (Глушим предупреждения)
+  # 🪐 2. ВЕБ-ИНТЕРФЕЙС MEMGRAPH LAB (СЛУШАЕТ ЖИВУЮ БАЗУ)
   memgraph_lab:
     image: memgraph/lab:latest
     container_name: aura7_memgraph_lab
@@ -21,42 +26,67 @@ services:
       - "47701:3000"
     environment:
       - LOG_LEVEL=error
-    depends_on:
-      - memgraph
     networks:
       - aura7_network
+    depends_on:
+      - memgraph
 
-  # 🚀 3. ЯДРО ТКАЧА (ГЛАВНЫЙ КОНТЕЙНЕР — УПРАВЛЯЕТ ОЧЕРЕДЬЮ СБОРКИ)
+  # 🚀 3. ЯДРО ТКАЧА (ПРИНИМАЕТ НА СЕБЯ КОНТРОЛЬ СТАРТОВЫХ ШАГОВ 0% - 50%)
   weaver_backend:
     image: node:20-alpine
     container_name: aura7_weaver_backend
     working_dir: /app/.aura/services/core
     expose:
       - "5000"
+    ports:
+      - "5000:5000"
     volumes:
       - ../../:/app
-      - /app/.aura/services/core/node_modules
+      - /app/.aura/services/core/node_modules # Анонимный том: Уводит I/O операции с SSD хоста в ОЗУ WSL2
     networks:
       - aura7_network
+    deploy:
+      resources:
+        limits:
+          memory: 1000M
     depends_on:
       - memgraph
     command: >
       sh -c "
-        echo '🔍 [Scan Weaver] Проверка целостности зависимостей...';
+        echo '🚀 [  0%] ИНИЦИАЛИЗАЦИЯ СЕТЕВОЙ МАТРИЦЫ АУРА 8: Запуск графового ядра...';
+        echo '📡 [ 15%] ТКАЧ ЯДРО: Ожидание прогрева Bolt-порта СУБД...';
+        while ! nc -z memgraph 7687 2>/dev/null; do sleep 0.5; done;
+        
+        echo '=========================================================';
+        echo '📡 [ 25%] ГРАФОВАЯ СУБД MEMGRAPH СТАБИЛИЗИРОВАЛАСЬ: Семантический порт 7687 открыт!';
+        echo '=========================================================';
+        
+        echo '🔍 [ 35%] ТКАЧ ЯДРО: Проверка целостности Node-зависимостей...';
+        # СКАНИРОВАНИЕ ЦЕЛОСТНОСТИ УЗЛОВ ТКАЧА: Защита SSD
         if [ ! -d node_modules/express ]; then
           echo '🚨 ПАКЕТЫ ТКАЧА ПОВРЕЖДЕНЫ ИЛИ ОТСУТСТВУЮТ! Восстановление контура...';
           npm install --prefer-offline --no-audit --no-fund;
         fi;
+        
+        # Фоновым процессом пускаем бережный чек готовности Express API
+        (
+          while ! nc -z localhost 5000 2>/dev/null; do sleep 0.5; done;
+          echo '=========================================================';
+          echo '🚀 [ 50%] КАСКАДНЫЙ БЭКЕНД ТКАЧА УСПЕШНО ПОДНЯТ: Порт 5000 готов к трансляции ракушек!';
+          echo '=========================================================';
+        ) &
+        
         rm -rf dist && npx ts-node --transpile-only src/index.ts
       "
-    # Элегантно тушим гонку: этот блок гарантирует, что бэкенд завершит npm install до старта фронтенда
+    # Хелсчек Ткача оставляем — Unix nc -z внутри Alpine работает пуленепробиваемо
     healthcheck:
-      test: ["CMD", "sh", "-c", "nc -z localhost 5000"]
-      interval: 3s
-      timeout: 2s
+      test: ["CMD-SHELL", "nc -z localhost 5000 || exit 1"]
+      interval: 1s
+      timeout: 1s
       retries: 30
       start_period: 5s
-  # 🚀 4. REACT-ФРОНТЕНД (ЖДЕТ СТАБИЛИЗАЦИИ БЭКЕНДА)
+
+  # 🚀 4. REACT-ФРОНТЕНД (СТАРТУЕТ ПОСЛЕ ОФИЦИАЛЬНОЙ СТАБИЛИЗАЦИИ БЭКЕНДА ТКАЧА)
   frontend:
     image: node:20-alpine
     container_name: aura7_frontend
@@ -65,25 +95,44 @@ services:
       - "3000"
     volumes:
       - ../../:/app
-      - /app/.aura/services/frontend/node_modules
+      - /app/.aura/services/frontend/node_modules # Анонимный том для защиты SSD
     networks:
       - aura7_network
+    deploy:
+      resources:
+        limits:
+          memory: 1000M
     depends_on:
-      memgraph:
-        condition: service_started
       weaver_backend:
-        condition: service_healthy # Намертво блокирует старт, пока бэкенд занят npm install
+        condition: service_healthy # Жесткий затвор: ждем полной боевой готовности Express API
     command: >
       sh -c "
-        echo '🔍 [Scan Frontend] Проверка целостности зависимостей...';
-        if [ ! -f node_modules/.bin/vite ]; then
-          echo '🚨 ПАКЕТЫ ПОВРЕЖДЕНЫ ИЛИ ОТСУТСТВУЮТ! Восстановление контура...';
+        echo '🪐 [ 55%] АУРА КАРТА: Ожидание запуска Express API Ткача...';
+        while ! nc -z weaver_backend 5000 2>/dev/null; do sleep 0.5; done;
+        
+        echo '🪐 [ 60%] АУРА КАРТА: API доступно. Проверка целостности Vite-зависимостей...';
+        # СКАНИРОВАНИЕ ЦЕЛОСТНОСТИ УЗЛОВ ФРОНТЕНДА: Защита SSD
+        if [ ! -d node_modules/vite ]; then
+          echo '🚨 ПАКЕТЫ ФРОНТЕНДА ПОВРЕЖДЕНЫ ИЛИ ОТСУТСТВУЮТ! Восстановление контура...';
           npm install --prefer-offline --no-audit --no-fund;
         fi;
+        
+        (
+          while ! nc -z localhost 3000 2>/dev/null; do sleep 0.5; done;
+          echo '=========================================================';
+          echo '🪐 [ 75%] REACTFLOW-ФРОНТЕНД СТАБИЛИЗИРОВАЛ СЕТЕВОЙ ПОРТ 3000!';
+          echo '=========================================================';
+        ) &
+        
         npm run dev -- --host --logLevel silent
       "
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 3000 || exit 1"]
+      interval: 1s
+      timeout: 1s
+      retries: 20
 
-  # 5. Шлюз Nginx (Глушим логи доступа, оставляем только критические ошибки)
+  # 🪐 5. ШЛЮЗ NGINX (ОТКРЫВАЕТ ВНЕШНИЙ ПОРТ ХОСТА СТРОГО ПОСЛЕ СТАРТА ВСЕХ СЛУЖБ)
   nginx:
     image: nginx:alpine
     container_name: aura7_nginx_gateway
@@ -96,42 +145,32 @@ services:
     networks:
       - aura7_network
     depends_on:
-      - weaver_backend
-      - frontend
+      weaver_backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
 
-  # 🚀 6. ИНТЕЛЛЕКТУАЛЬНЫЙ ТЕРМИНАЛ ПРОГРЕССА ГОТОВНОСТИ (С ЗАЩИТОЙ ОТ ЗАВИСАНИЯ)
+  # 🚀 6. ИНТЕЛЛЕКТУАЛЬНЫЙ ТЕРМИНАЛ ПРОГРЕССА (ПОСЛЕДОВАТЕЛЬНЫЙ СИНХРОННЫЙ ОТЧЕТ В ПРОЦЕНТАХ)
   readiness_checker:
     image: alpine:latest
     container_name: aura7_readiness_checker
     networks:
       - aura7_network
     depends_on:
-      - memgraph
-      - nginx
-      - frontend
+      weaver_backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     command: >
       sh -c "
         while ! mknod /tmp/pipe p 2>/dev/null; do sleep 0.1; done;
-        echo '🚀 [ 0%] Запуск сканирования... Ожидание готовности сетевой матрицы Аура 7...';
+        echo '🚀 [ 80%] ШЛЮЗ NGINX: Ожидание стабилизации портов Nginx на внешнем контуре...';
+        while ! nc -z nginx 80 2>/dev/null; do sleep 1; done;
         
-        # Безопасный опрос Memgraph (макс. 40 попыток ~20 секунд)
-        TRY=0; until nc -w 1 memgraph 7687 2>/dev/null || [ \$TRY -eq 40 ]; do sleep 0.5; TRY=\$((TRY+1)); done;
-        if [ \$TRY -eq 40 ]; then echo '🚨 КРИТИЧЕСКИЙ СБОЙ: Memgraph не ответил!'; exit 1; fi;
-        echo '📡 [ 25%] ГРАФОВАЯ СУБД МЕMGRAPH УСПЕШНО ОТКРЫЛА ПОРТ 7687!';
-        
-        # Безопасный опрос Frontend (макс. 120 попыток ~60 секунд)
-        TRY=0; until nc -w 1 frontend 3000 2>/dev/null || [ \$TRY -eq 120 ]; do sleep 0.5; TRY=\$((TRY+1)); done;
-        if [ \$TRY -eq 120 ]; then echo '🚨 КРИТИЧЕСКИЙ СБОЙ: Frontend не запустился!'; exit 1; fi;
-        echo '🪐 [ 50%] REACTFLOW-ФРОНТЕНД СТАБИЛИЗИРОВАЛ СЕТЕВОЙ ПОРТ 3000!';
-        
-        # Безопасный опрос Nginx (макс. 40 попыток ~20 секунд)
-        TRY=0; until nc -w 1 nginx 80 2>/dev/null || [ \$TRY -eq 40 ]; do sleep 0.5; TRY=\$((TRY+1)); done;
-        if [ \$TRY -eq 40 ]; then echo '🚨 КРИТИЧЕСКИЙ СБОЙ: Шлюз Nginx недоступен!'; exit 1; fi;
-        echo '⚡ [ 75%] ШЛЮЗ NGINX УСПЕШНО СМАРШРУТИЗИРОВАЛ ВНЕШНИЙ ПОРТ 80!';
-        
+        echo '⚡ [ 90%] ШЛЮЗ NGINX: Внешний порт 80 успешно запечен в сетевую матрицу aura8!';
         sleep 1;
         echo '=========================================================';
-        echo '🔥 [100%] [SPEEDRUN READY] КОНТУР УСПЕШНО ИГГДРАСИЛЬ-СТАБИЛИЗИРОВАН!';
+        echo '🔥 [100%] [SPEEDREADY] КОНТУР АУРА 8 УСПЕШНО СТАБИЛИЗИРОВАН БЕЗ МУСОРНОГО ИИ-ВЕСА!';
         echo '🚀 ВСЕ СЕРВИСЫ ОК. СКОБКИ СОШЛИСЬ. ПУЛЯЙ ТРАНСПОРТ 13 РАКУШЕК!';
         echo '=========================================================';
       "

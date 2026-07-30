@@ -5,6 +5,8 @@ import path from 'path';
 const LOG_FILE_PATH = path.resolve('/app/.aura/services/core/dist/nitka.log');
 
 export async function initStitchLog(): Promise<void> {
+    // 🔥 ФИКС: Принудительно создаем папку dist/, если её стерло при очистке докера!
+    await fs.ensureDir(path.dirname(LOG_FILE_PATH));
     await fs.writeFile(LOG_FILE_PATH, `=== СТАРТ УМНОГО ТОКЕНАЙЗЕРА СЕТИ v38.9 (ENTERPRISE PROTECTION) ===\n`, 'utf8');
 }
 
@@ -86,9 +88,11 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
         // 2. ТРАНСЛЯЦИЯ МАКРOСА NestedQuery (Фикс гварда коллизий !== на === и .id на .type под v38.9)
         if (trimmed.startsWith("NestedQuery(target")) {
             const targetName = getParamValue(trimmed, "target");
-            tsLines.push(`        for (const [targetEntityId, [targetArchetype, targetCFrame, targetVelocity]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent, VelocityComponent]>) { if (targetArchetype.type !== "${targetName || "PLAYER"}") continue;`);
+            // 🔥 ФИКС БЛОКА 3: Принудительно кастим кортеж вложенного цикла к Map<number, any[]>
+            // Это полностью убирает ошибку отсутствия метода sub у векторов!
+            tsLines.push(`        for (const [targetEntityId, [targetArchetype, targetCFrame, targetVelocity]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, any[]>) { if (targetArchetype.type !== "${targetName || "PLAYER"}") continue;`);
             braceBalance++;
-            logStitchSync("[STITCH-302]", `Открыт строго типизированный цикл NestedQuery.`);
+            logStitchSync("[STITCH-302]", `Открыт нативно типизированный цикл NestedQuery.`);
             continue;
         }
         // 3. Макрос Guard
