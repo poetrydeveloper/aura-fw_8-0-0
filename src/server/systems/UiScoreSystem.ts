@@ -63,25 +63,21 @@ import * as Constants from "../../shared/constants";
 export class UiScoreSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [archetype]] of ctx.world.query(({} as unknown)) as unknown as Map<number, [ArchetypeComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 10) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (archetype.type !== 'PLAYER' || entityId !== localPlayerEntityId) {
 
 
 
-        for (const [entityId, [archetype]] of ctx.world.query(({} as unknown)) as unknown as Map<number, [ArchetypeComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 10) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (archetype.type !== 'PLAYER' || entityId !== localPlayerEntityId) {
-
-                const playerInstance = Players.LocalPlayer;
-                const leaderstats = playerInstance ? playerInstance.FindFirstChild('leaderstats') : undefined;
-                const scoreObject = leaderstats ? (leaderstats.FindFirstChild('Points') as NumberValue) : undefined;
-                const currentScore = scoreObject ? scoreObject.Value : 0;
-
-                const uiTick = currentScore >= 0 ? print('[Aura UI] Interface display updated. Current score value:', currentScore) : undefined;
-
-            }
-        }
     }
+}
+        )
+
 
 }

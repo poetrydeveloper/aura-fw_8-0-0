@@ -22,3 +22,7 @@ AuraShell(
         Calculate(var = "Factions", expr = "['ALIENS', 'HUMANS', 'NEUTRAL'] as const");
     )
 )
+
+# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
+# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
+# AURA_END

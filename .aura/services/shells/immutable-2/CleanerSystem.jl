@@ -22,17 +22,31 @@ AuraShell(
         Query(components = ["CFrameComponent", "ArchetypeComponent"]) do
             Safety(limit = 500); 
             
-            # 🔥 БЛOЧНЫЙ КАНOН: Каждый Guard открывает вложенный блок и закрывается своим end!
-            Guard(condition = "archetype.type === 'STATIONARY_OBJECT'") do
-                Guard(condition = "math.abs(cFrame.value.Position.X) < 2000 && math.abs(cFrame.value.Position.Z) < 2000") do
-                    Guard(condition = "math.abs(cFrame.value.Position.Y) < 500") do
-                        
-                        ctx.world.despawn(entityId);
-                        print("[Aura Garbage Collector] Entity removed out of bounds: ", entityId);
-                        
-                    end
-                end
-            end
+            # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Декларативные слоты-мишени
+            Guard_if(condition = "archetype.type === 'STATIONARY_OBJECT'", slot = "03805_00001");
+            
+            # =========================================================================
+            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # =========================================================================
+            
+            #START_CONTENT_03805_00001#
+            Guard_if(condition = "math.abs(cFrame.value.Position.X) < 2000 && math.abs(cFrame.value.Position.Z) < 2000", slot = "03805_00002");
+            
+            #START_CONTENT_03805_00002#
+            Guard_if(condition = "math.abs(cFrame.value.Position.Y) < 500", slot = "03805_00003");
+            
+            #START_CONTENT_03805_00003#
+            ctx.world.despawn(entityId);
+            print("[Aura Garbage Collector] Entity removed out of bounds: ", entityId);
+            #END_CONTENT_03805_00003#
+            
+            #END_CONTENT_03805_00002#
+            #END_CONTENT_03805_00001#
+            
         end
     end
 )
+
+# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
+# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
+# AURA_END

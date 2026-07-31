@@ -23,22 +23,34 @@ AuraShell(
         Query(components = ["ArchetypeComponent", "CFrameComponent", "DamageComponent"]) do
             Safety(limit = 1000); 
             
-            # 🔥 БЛOЧНЫЙ КАНOН: Каждая проверка открывает свой do-блок
-            Guard(condition = "archetype.type === 'PLASMA_BOLT'") do
+            # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Декларативный корневой слот-мишень
+            Guard_if(condition = "archetype.type === 'PLASMA_BOLT'", slot = "03805_00001");
+            
+            # =========================================================================
+            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # =========================================================================
+            
+            #START_CONTENT_03805_00001#
+            NestedQuery(target = "ENEMY_INTERCEPTOR") do
+                # Внутри NestedQuery объявляем следующий каскадный слот
+                Guard_if(condition = "isAuraTargetValid", slot = "03805_00002");
                 
-                NestedQuery(target = "ENEMY_INTERCEPTOR") do
-                    # Чистый, строго типизированный код без continue и без any
-                    Guard(condition = "targetArchetype.type === 'ENEMY_INTERCEPTOR'") do
-                        Guard(condition = "cFrame.value.Position.sub(targetCFrame.value.Position).Magnitude < 4") do
-                            
-                            Mutate(component = "DamagePayloadComponent", values = Dict("value" => "damage.value", "targetEntityId" => "targetEntityId"));
-                            ctx.world.despawn(entityId);
-                            
-                        end
-                    end
-                end
+                #START_CONTENT_03805_00002#
+                Guard_if(condition = "cFrame.value.Position.sub(targetCFrame.value.Position).Magnitude < 4", slot = "03805_00003");
                 
+                #START_CONTENT_03805_00003#
+                Mutate(component = "DamagePayloadComponent", values = Dict("value" => "damage.value", "targetEntityId" => "targetEntityId"));
+                ctx.world.despawn(entityId);
+                #END_CONTENT_03805_00003#
+                
+                #END_CONTENT_03805_00002#
             end
+            #END_CONTENT_03805_00001#
+            
         end
     end
 )
+
+# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
+# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
+# AURA_END

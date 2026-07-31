@@ -63,30 +63,21 @@ import * as Constants from "../../shared/constants";
 export class WeaponTimerSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [weaponState, archetype]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [WeaponStateComponent, ArchetypeComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 2000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (weaponState.isCharging === false) {
 
 
 
-        for (const [entityId, [weaponState, archetype]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [WeaponStateComponent, ArchetypeComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 2000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (weaponState.isCharging === false) {
-                if (weaponState.nextTimer <= 0) {
-
-                    const timeDecrement = deltaTime;
-                    const nextCooldown = math.max(0, weaponState.nextTimer - timeDecrement);
-
-                    ctx.world.insert(entityId, ({ "nextTimer": "nextCooldown", "isCharging": "nextCooldown > 0 ? true : false", "ammoCapacity": "weaponState.ammoCapacity" } as unknown as Record<string, unknown>));
-
-                    if (nextCooldown > 0) {
-
-                        print("[Aura Weapon Grid] Weapon reload complete for entity: ", entityId);
-
-                    }
-                }
-            }
-        }
     }
+}
+        )
+
 
 }

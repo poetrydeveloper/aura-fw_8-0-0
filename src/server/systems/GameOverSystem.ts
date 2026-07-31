@@ -63,22 +63,21 @@ import * as Constants from "../../shared/constants";
 export class GameOverSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [archetype, health]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, HealthComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 10) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (archetype.type !== 'PLAYER' || health.current > 0) {
 
 
 
-        for (const [entityId, [archetype, health]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, HealthComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 10) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (archetype.type !== 'PLAYER' || health.current > 0) {
-
-                ctx.world.insert(entityId, ({ "current": "0", "max": "health.max", "isInvulnerable": "true" } as unknown as Record<string, unknown>));
-
-                print("[Aura Core] Player defeat detected. Restarting game loop session...", entityId);
-
-            }
-        }
     }
+}
+        )
+
 
 }

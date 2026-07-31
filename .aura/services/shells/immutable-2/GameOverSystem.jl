@@ -23,14 +23,23 @@ AuraShell(
         Query(components = ["ArchetypeComponent", "HealthComponent"]) do
             Safety(limit = 10); 
             
-            # 🔥 БЛOЧНЫЙ КАНOН: Guard открывает логическое тело do. continue стерт из ОЗУ.
-            Guard(condition = "archetype.type !== 'PLAYER' || health.current > 0") do
-                
-                Mutate(component = "HealthComponent", values = Dict("current" => "0", "max" => "health.max", "isInvulnerable" => "true"));
-                
-                print("[Aura Core] Player defeat detected. Restarting game loop session...", entityId);
-                
-            end
+            # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Декларативный корневой слот
+            Guard_if(condition = "archetype.type !== 'PLAYER' || health.current > 0", slot = "03805_00001");
+            
+            # =========================================================================
+            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # =========================================================================
+            
+            #START_CONTENT_03805_00001#
+            Mutate(component = "HealthComponent", values = Dict("current" => "0", "max" => "health.max", "isInvulnerable" => "true"));
+            
+            print("[Aura Core] Player defeat detected. Restarting game loop session...", entityId);
+            #END_CONTENT_03805_00001#
+            
         end
     end
 )
+
+# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
+# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
+# AURA_END

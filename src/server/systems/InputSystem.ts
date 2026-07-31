@@ -63,31 +63,21 @@ import * as Constants from "../../shared/constants";
 export class InputSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [velocity, archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [VelocityComponent, ArchetypeComponent, CFrameComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 100) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (archetype.type !== 'PLAYER') {
 
 
 
-        for (const [entityId, [velocity, archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [VelocityComponent, ArchetypeComponent, CFrameComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 100) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (archetype.type !== 'PLAYER') {
-
-                if (entityId !== localPlayerEntityId) {
-
-                    const inputDirection = getMovementInputVector();
-                    const maxSpeed = 35;
-                    const targetVelocity = inputDirection.mul(maxSpeed);
-
-                    if (targetVelocity.Magnitude === 0 && velocity.value.Magnitude === 0) {
-
-                        ctx.world.insert(entityId, ({ "value": "targetVelocity", "angular": "velocity.angular" } as unknown as Record<string, unknown>));
-
-                        inputEvents.VelocityUpdate.fireServer(targetVelocity);
-                    }
-                }
+    }
+}
         )
 
-            }
 
-        }
+}

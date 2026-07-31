@@ -63,34 +63,23 @@ import * as Constants from "../../shared/constants";
 export class EnemyAiSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 10) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (archetype.type === 'PLAYER') {
 
 
 
-        for (const [entityId, [archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 10) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (archetype.type === 'PLAYER') {
 
-                const playerPos = cFrame.value.Position;
-
-                for (const [targetEntityId, [rawTargetArchetype, rawTargetCFrame, rawTargetVelocity]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, unknown[]>) {
-                    const targetArchetype = rawTargetArchetype as unknown as ArchetypeComponent;
-                    const targetCFrame = rawTargetCFrame as unknown as CFrameComponent;
-                    const targetVelocity = rawTargetVelocity as unknown as VelocityComponent;
-                    if (targetArchetype.type === "ENEMY_INTERCEPTOR") {
-                        const enemyPos = targetCFrame.value.Position;
-
-                        const dirVector = playerPos.sub(enemyPos).Magnitude > 0 ? playerPos.sub(enemyPos).Unit : new Vector3(0, 0, 0);
-                        const aiSpeed = 25;
-                        const calculatedVelocity = dirVector.mul(aiSpeed);
-
-                        ctx.world.insert(targetEntityId, ({ "value": "calculatedVelocity" } as unknown as Record<string, unknown>));
-                    }
-
-                }
-            }
-        }
 
     }
+}
+        )
+
+
+}

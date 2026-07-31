@@ -22,12 +22,25 @@ AuraShell(
     render = function(ctx)
         Calculate(var = "randomX", expr = "math.min(500, math.max(-500, 200))");
         
-        # 🔥 БЛOЧНЫЙ КАНOН: Каждая проверка открывает свой do-блок и закрывается своим end!
-        Guard(condition = "math.abs(randomX) >= 1000") do
-            Guard(condition = "tick() % 5 > 0.1") do
-                Mutate(component = "ArchetypeComponent", values = Dict("type" => "'ENEMY_INTERCEPTOR'", "faction" => "'ALIENS'", "mass" => "100", "targetEntityId" => "ctx.world.spawn()"));
-                print("[Aura Spawner] Entity spawned at position X: ", randomX);
-            end
-        end
+        # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Корневой декларативный слот
+        Guard_if(condition = "math.abs(randomX) >= 1000", slot = "03805_00001");
+        
+        # =========================================================================
+        # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+        # =========================================================================
+        
+        #START_CONTENT_03805_00001#
+        Guard_if(condition = "tick() % 5 > 0.1", slot = "03805_00002");
+        
+        #START_CONTENT_03805_00002#
+        Mutate(component = "ArchetypeComponent", values = Dict("type" => "'ENEMY_INTERCEPTOR'", "faction" => "'ALIENS'", "mass" => "100", "targetEntityId" => "ctx.world.spawn()"));
+        print("[Aura Spawner] Entity spawned at position X: ", randomX);
+        #END_CONTENT_03805_00002#
+        
+        #END_CONTENT_03805_00001#
     end
 )
+
+# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
+# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
+# AURA_END

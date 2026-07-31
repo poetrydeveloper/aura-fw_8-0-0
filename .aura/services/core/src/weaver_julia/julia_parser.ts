@@ -6,13 +6,13 @@ const LOG_FILE_PATH = path.resolve('/app/.aura/services/core/dist/nitka.log');
 
 export async function initStitchLog(): Promise<void> {
     await fs.ensureDir(path.dirname(LOG_FILE_PATH));
-    await fs.writeFile(LOG_FILE_PATH, `=== СТАРТ УМНОГО ТОКЕНАЙЗЕРА СЕТИ v40.0 (EXPLICIT TERMINATION) ===\n`, 'utf8');
+    await fs.writeFile(LOG_FILE_PATH, `=== СТАРТ АБСОЛЮТНОГО ЗЕРКАЛЬНОГО КОМПИЛЯТОРА v42.0 (ZERO COSTEEL) ===\n`, 'utf8');
 }
 
 /**
- * ⚡ ДЕТЕРМИНИРОВАННЫЙ БЕСКОНТЕКСТНЫЙ КОМПИЛЯТОР JULIA ➔ TYPESCRIPT v40.0.0
- * Работает по зеркальному принципу: do = {, end = }.
- * Останавливает чтение строго по явному токену финала контракта # AURA_END.
+ * ⚡ АБСОЛЮТНЫЙ БЕСКОНТЕКСТНЫЙ ЗЕРКАЛЬНЫЙ КОМПИЛЯТОР v42.0.0
+ * Полный отказ от авто-генерации закрывающих скобок макросами и токенами.
+ * Жесткое правило: 1 открывающее слово = {, 1 маркер end = }.
  */
 export function translateJuliaToTs(juliaCode: string, className: string, methodName: string): string {
     if (!juliaCode || !juliaCode.trim()) return "";
@@ -21,6 +21,9 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
     let tsLines: string[] = [];
     let memoryLogs: string[] = []; 
     let insideRender = false;
+    
+    // Хэш-карта квантовой матрицы контента
+    const contentMatrix = new Map<string, string[]>();
 
     const logStitchSync = (code: string, msg: string) => {
         memoryLogs.push(`[CLASS: ${className}] [METHOD: ${methodName}] ${code} -> ${msg}\n`);
@@ -41,14 +44,62 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
         const endIdx = lineText.indexOf(endQuoteChar, startIdx + 1);
         return endIdx === -1 ? "" : lineText.substring(startIdx + 1, endIdx).trim();
     };
-    
+
+    // =========================================================================
+    // 🛰️ ПАСС №1: ИЗОЛИРОВАННОЕ СКАНИРОВАНИЕ И ИНДЕКСАЦИЯ МАТРИЦЫ КОНТЕНТА
+    // =========================================================================
+    let currentSlotId: string | null = null;
+    let insideScanScope = false;
+    const skeletonLines: string[] = [];
+
     for (let line of lines) {
         let trimmed = line.trim();
         
-        // 🔥 НАШ НОВЫЙ ВЫСШИЙ СЕМАНТИЧЕСКИЙ КАНOН: Explicit Termination Token
-        // Если Ткач натыкается на этот маркер — сборка метода немедленно прекращается!
+        if (!insideScanScope) {
+            skeletonLines.push(line);
+            if (trimmed.startsWith("render = function") || trimmed.startsWith("render(ctx)") || trimmed.includes("render = (ctx) ->") || trimmed.includes("render = ctx ->")) {
+                insideScanScope = true;
+            }
+            continue;
+        }
+
+        // Фиксация старта именованной капсулы контента
+        if (trimmed.includes("#START_CONTENT_")) {
+            const match = trimmed.match(/#START_CONTENT_([0-9]+_[0-9]+)#/);
+            if (match && match[1]) {
+                currentSlotId = match[1]; // Фиксируем чистый строковый ID контента
+                contentMatrix.set(currentSlotId, []);
+                logStitchSync("[MATRIX-SCAN-START]", `Зарегистрирован квантовый слот контента: ${currentSlotId}`);
+            }
+            continue;
+        }
+
+        // Фиксация закрытия капсулы контента
+        if (trimmed.includes("#END_CONTENT_")) {
+            currentSlotId = null;
+            continue;
+        }
+
+        // Если мы внутри капсулы контента, копим её строки в хэш-карту и НЕ пускаем в скелет файла!
+        if (currentSlotId) {
+            contentMatrix.get(currentSlotId)!.push(line);
+        } else {
+            skeletonLines.push(line);
+        }
+    }
+
+    logStitchSync("[MATRIX-SCAN-COMPLETE]", `Индексация завершена. Собрано уникальных слотов: ${contentMatrix.size}`);
+
+    // =========================================================================
+    // 🛸 ПАСС №2: ЗЕРКАЛЬНАЯ ГЕНЕРАЦИЯ И СБОРКА КОДА
+    // =========================================================================
+    for (let line of skeletonLines) {
+        let trimmed = line.trim();
+
+        // 🔥 ЖЕСТКИЙ КАНOН v42.0: AURA_END — это ПРОСТО СТОП-КРАН СТРИМА. 
+        // Он больше БЕЗДУМНО НЕ ПИШЕТ закрывающие скобки!
         if (trimmed.includes("AURA_END")) {
-            logStitchSync("[STITCH-TERMINATION]", "Обнаружен детерминированный токен финала # AURA_END. Стрим успешно закрыт.");
+            logStitchSync("[STITCH-TERMINATION]", "Достигнут маркер финала # AURA_END. Потоковое чтение детерминировано остановлено.");
             break;
         }
 
@@ -57,7 +108,6 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
             continue;
         }
         
-        // ЭШЕЛОН ИЗОЛЯЦИИ: Включаем транслятор строго внутри тела функции render
         if (!insideRender) {
             if (trimmed.startsWith("render = function") || trimmed.startsWith("render(ctx)") || trimmed.includes("render = (ctx) ->") || trimmed.includes("render = ctx ->")) {
                 insideRender = true;
@@ -84,19 +134,46 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
             tsLines.push(`        for (const [entityId, [${iterators}]] of ctx.world.query(${(comps.map(() => '({} as unknown)')).join(', ')}) as unknown as Map<number, [${strictTypesList}]>) {`);
             continue;
         }
-                // 2. ТРАНСЛЯЦИЯ МАКРOСА NestedQuery
+        // 1.5. 🔥 КВАНТОВЫЙ МАКРОС СЛОТА Guard_if (v41.3.0 БЕЗ ХАРДКОДА СКОБОК)
+        if (trimmed.startsWith("Guard_if(condition")) {
+            const condStr = getParamValue(trimmed, "condition");
+            const slotId = getParamValue(trimmed, "slot");
+            
+            // 🔥 АБСОЛЮТНЫЙ КАНOН: Макрос только открывает block!
+            // Закрывать его будет строго родной маркер 'end' из ракушки Джулии!
+            tsLines.push(`            if (${condStr || "true"}) {`);
+            
+            // Если для этого слота был собран изолированный контент на Пассе №1 — рекурсивно разворачиваем его!
+            if (slotId && contentMatrix.has(slotId)) {
+                const rawSlotBody = contentMatrix.get(slotId)!.join('\n');
+                // Рекурсивный вызов для компиляции вложенной начинки (NestedQuery, Mutate, Calculate)
+                const compiledSlotBody = translateJuliaToTs(rawSlotBody, className, methodName);
+                tsLines.push(compiledSlotBody);
+            } else {
+                logStitchSync("[MATRIX-WARN]", `Предупреждение: Слот ${slotId} объявлен, но контент-капсула пуста или отсутствует.`);
+            }
+            
+            // 🔥 ПОЛНЫЙ ОТКАЗ ОТ АВТО-ЗАКРЫТИЙ! Никаких tsLines.push('}') тут нет!
+            logStitchSync("[STITCH-GUARD-IF-MATRIX]", `Успешная инжекция квантовой матрицы контента в слот: ${slotId}`);
+            continue;
+        }
+
+        // 2. ТРАНСЛЯЦИЯ МАКРOСА NestedQuery (ЗЕРКАЛЬНЫЙ БАЛАНС v41.3.0)
         if (trimmed.startsWith("NestedQuery(target")) {
             const targetName = getParamValue(trimmed, "target");
             tsLines.push(`        for (const [targetEntityId, [rawTargetArchetype, rawTargetCFrame, rawTargetVelocity]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, unknown[]>) {`);
             tsLines.push(`            const targetArchetype = rawTargetArchetype as unknown as ArchetypeComponent;`);
             tsLines.push(`            const targetCFrame = rawTargetCFrame as unknown as CFrameComponent;`);
             tsLines.push(`            const targetVelocity = rawTargetVelocity as unknown as VelocityComponent;`);
-            tsLines.push(`            if (targetArchetype.type === "${targetName || "PLAYER"}") {`);
-            logStitchSync("[STITCH-NESTED]", `Развернут строго типизированный цикл NestedQuery без any.`);
+            
+            // Задаем локальный логический флаг без открытия лишних фигурных скобок!
+            tsLines.push(`            const isAuraTargetValid = targetArchetype.type === "${targetName || "PLAYER"}";`);
+            
+            logStitchSync("[STITCH-NESTED]", `Развернут строго зеркальный цикл NestedQuery.`);
             continue;
         }
 
-        // 3. БЛОЧНЫЙ МАКРОС Guard (if-блок)
+        // 3. БЛОЧНЫЙ МАКРОС Guard (ЛЕГАСИ if-блок — сохранен для обратной совместимости)
         if (trimmed.startsWith("Guard(condition")) {
             const condStr = getParamValue(trimmed, "condition");
             tsLines.push(`            if (${condStr || "true"}) {`);
@@ -136,12 +213,11 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
                     if (trimmed[i] === ')') { parenCount--; if (parenCount === 0) { endPos = i; break; } }
                 }
                 const rawValues = trimmed.substring(startPos, endPos).trim();
-                
                 const entries = rawValues.split(",");
                 const processedFields = entries.map(entry => {
                     if (!entry.includes("=>")) return "";
                     const parts = entry.split("=>");
-                    const k = parts[0]; // Наш ювелирный фикс ключа
+                    const k = parts[0]; 
                     const v = parts.slice(1).join("=>");
                     
                     const cleanKey = k.replace(/["'\s]/g, ""); 
@@ -172,10 +248,10 @@ export function translateJuliaToTs(juliaCode: string, className: string, methodN
         }
         
         // =========================================================================
-        // 8. ЧИСТЫЙ ЗЕРКАЛЬНЫЙ АВТОМАТ end (ПОЛНЫЙ ДЕТЕРМИНИЗМ v40.0.0)
+        // 8. ЧИСТЫЙ ЗЕРКАЛЬНЫЙ АВТОМАТ end (ПОЛНЫЙ ДЕТЕРМИНИЗМ v41.3.0)
         // =========================================================================
         if (trimmed === "end" || trimmed.startsWith("end")) {
-            // Любой end слепо и без оглядки превращается в }
+            // Любой маркер end из ракушки честно и бесконтекстно превращается в закрывающую скобку }
             tsLines.push("        }");
             logStitchSync("[STITCH-END-COLLAPSE]", "Схлопывание блока Julia end ➔ }");
             continue;

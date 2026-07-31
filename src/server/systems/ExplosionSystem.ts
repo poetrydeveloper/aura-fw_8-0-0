@@ -63,27 +63,21 @@ import * as Constants from "../../shared/constants";
 export class ExplosionSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [archetype, cFrame, health]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent, HealthComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 100) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (archetype.type === 'ENEMY_INTERCEPTOR') {
 
 
 
-        for (const [entityId, [archetype, cFrame, health]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent, HealthComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 100) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (archetype.type === 'ENEMY_INTERCEPTOR') {
-                if (health.current > 0) {
-
-                    const deathPos = cFrame.value.Position;
-                    const randomX = deathPos.X;
-
-                    ctx.world.despawn(entityId);
-
-                    print("[Aura Visual] Entity destroyed. Particles generated at position X: ", randomX);
-
-                }
-            }
-        }
     }
+}
+        )
+
 
 }

@@ -19,30 +19,36 @@ AuraShell(
     
     render = function(ctx)
         Query(components = ["VelocityComponent", "ArchetypeComponent", "CFrameComponent"]) do
-            # Канон: Все комментарии изолированы сверху, строки макросов стерильно чисты!
             Safety(limit = 100); 
             
-            # Гвард 1: Обрабатываем только архетип игрока 'PLAYER'
-            Guard(condition = "archetype.type !== 'PLAYER'");
+            # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Корневой декларативный слот
+            Guard_if(condition = "archetype.type !== 'PLAYER'", slot = "03805_00001");
             
-            # 🔥 ГЛАВНЫЙ ФИКС 1: Запрещенный контекст 'this.' стерт под ноль.
-            # Переменная localPlayerEntityId считывается напрямую из разрешенного Белого словаря!
-            Guard(condition = "entityId !== localPlayerEntityId"); 
+            # =========================================================================
+            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # =========================================================================
             
-            # 🔥 ГЛАВНЫЙ ФИКС 2: Контекст 'this.' стерт. Вызов метода ввода идет плоским термом.
-            # Векторное умножение .mul() заменено на нативный математический оператор '*'!
+            #START_CONTENT_03805_00001#
+            Guard_if(condition = "entityId !== localPlayerEntityId", slot = "03805_00002");
+            
+            #START_CONTENT_03805_00002#
             Calculate(var = "inputDirection", expr = "getMovementInputVector()");
             Calculate(var = "maxSpeed", expr = "35"); 
             Calculate(var = "targetVelocity", expr = "inputDirection.mul(maxSpeed)");
             
-            # Проверяем отсутствие инпута и неподвижность корабля для экономии ОЗУ
-            Guard(condition = "targetVelocity.Magnitude === 0 && velocity.value.Magnitude === 0");
+            Guard_if(condition = "targetVelocity.Magnitude === 0 && velocity.value.Magnitude === 0", slot = "03805_00003");
             
-            # Мутируем локальную скорость компонента
+            #START_CONTENT_03805_00003#
             Mutate(component = "VelocityComponent", values = Dict("value" => "targetVelocity", "angular" => "velocity.angular"));
-            
-            # 🔥 ГЛАВНЫЙ ФИКС 3: Сетевой есвент отправлен на сервер без 'this.' через чистый терм inputEvents
             inputEvents.VelocityUpdate.fireServer(targetVelocity);
+            #END_CONTENT_03805_00003#
+            
+            #END_CONTENT_03805_00002#
+            #END_CONTENT_03805_00001#
         end
     end
 )
+
+# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
+# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
+# AURA_END

@@ -23,12 +23,19 @@ AuraShell(
         Query(components = ["ArchetypeComponent", "CFrameComponent"]) do
             Safety(limit = 10); 
             
-            # 🔥 БЛOЧНЫЙ КАНOН: Открываем тело do-блока Guard. Никаких continue на выходе!
-            Guard(condition = "archetype.type === 'PLAYER'") do
-                
-                Calculate(var = "playerPos", expr = "cFrame.value.Position");
-                
-                NestedQuery(target = "ENEMY_INTERCEPTOR") do
+            # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Декларативный корневой слот
+            Guard_if(condition = "archetype.type === 'PLAYER'", slot = "03805_00001");
+            
+            # =========================================================================
+            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # =========================================================================
+            
+            #START_CONTENT_03805_00001#
+            Calculate(var = "playerPos", expr = "cFrame.value.Position");
+            
+            NestedQuery(target = "ENEMY_INTERCEPTOR") do
+                # Нативный внутренний if для проверки захваченного таргета
+                if targetArchetype.type === "ENEMY_INTERCEPTOR"
                     Calculate(var = "enemyPos", expr = "targetCFrame.value.Position");
                     
                     Calculate(var = "dirVector", expr = "playerPos.sub(enemyPos).Magnitude > 0 ? playerPos.sub(enemyPos).Unit : new Vector3(0, 0, 0)");
@@ -37,8 +44,13 @@ AuraShell(
                     
                     Mutate(component = "VelocityComponent", values = Dict("value" => "calculatedVelocity", "targetEntityId" => "targetEntityId"));
                 end
-                
             end
+            #END_CONTENT_03805_00001#
+            
         end
     end
 )
+
+# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
+# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
+# AURA_END

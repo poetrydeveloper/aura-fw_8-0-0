@@ -11,7 +11,7 @@
     {
       "code": "AURA-ERR-008",
       "severity": "CRITICAL",
-      "pattern": "(?<!end\\s*\\r?\\n\\s*)end\\s*\\r?\\n\\s*\\)\\s*$",
+      "pattern": "^(?!.*AURA_END)(?<!end\\s*\\r?\\n\\s*)end\\s*\\r?\\n\\s*\\)\\s*$",
       "message": "В ракушках без макроса Query (плоский render) запрещен перенос закрывающей скобки ')' на отдельную строку после 'end'. Прижмите её к финалу: 'end)' для корректной трансляции Flamework-класса."
     },
     {
@@ -289,7 +289,11 @@
       "strictTargetArchetype",
       "strictTargetCFrame",
       "calculatedVelocity",
-      "AURA_END"
+      "AURA_END",
+      "Guard_if",
+      "START_CONTENT",
+      "END_CONTENT",
+      "slot"
     ]
   }
 }

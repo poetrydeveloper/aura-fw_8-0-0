@@ -63,22 +63,21 @@ import * as Constants from "../../shared/constants";
 export class ScoreRewardSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [archetype, health, damagePayload]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, HealthComponent, DamagePayloadComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 1000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (archetype.type === 'ENEMY_INTERCEPTOR') {
 
 
 
-        for (const [entityId, [archetype, health, damagePayload]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, HealthComponent, DamagePayloadComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 1000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (archetype.type === 'ENEMY_INTERCEPTOR') {
-                if ((health.current - damagePayload.value) > 0) {
-
-                    print("[Aura Progress] Enemy destroyed. Reward experience added for entity: ", entityId);
-
-                }
-            }
-        }
     }
+}
+        )
+
 
 }

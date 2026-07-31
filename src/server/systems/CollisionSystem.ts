@@ -63,33 +63,23 @@ import * as Constants from "../../shared/constants";
 export class CollisionSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [archetype, cFrame, damage]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent, DamageComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 1000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (archetype.type === 'PLASMA_BOLT') {
 
 
 
-        for (const [entityId, [archetype, cFrame, damage]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent, DamageComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 1000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
-
-            if (archetype.type === 'PLASMA_BOLT') {
-
-                for (const [targetEntityId, [rawTargetArchetype, rawTargetCFrame, rawTargetVelocity]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, unknown[]>) {
-                    const targetArchetype = rawTargetArchetype as unknown as ArchetypeComponent;
-                    const targetCFrame = rawTargetCFrame as unknown as CFrameComponent;
-                    const targetVelocity = rawTargetVelocity as unknown as VelocityComponent;
-                    if (targetArchetype.type === "ENEMY_INTERCEPTOR") {
-                        if (targetArchetype.type === 'ENEMY_INTERCEPTOR') {
-                            if (cFrame.value.Position.sub(targetCFrame.value.Position).Magnitude < 4) {
-
-                                ctx.world.insert(targetEntityId, ({ "value": "damage.value" } as unknown as Record<string, unknown>));
-                                ctx.world.despawn(entityId);
-
-                            }
-                        }
-                    }
-
-                }
-            }
-        }
 
     }
+
+}
+        }
+        )
+
+
+}

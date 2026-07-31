@@ -63,25 +63,22 @@ import * as Constants from "../../shared/constants";
 export class CleanerSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [cFrame, archetype]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [CFrameComponent, ArchetypeComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 500) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (archetype.type === 'STATIONARY_OBJECT') {
 
 
 
-        for (const [entityId, [cFrame, archetype]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [CFrameComponent, ArchetypeComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 500) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (archetype.type === 'STATIONARY_OBJECT') {
-                if (math.abs(cFrame.value.Position.X) < 2000 && math.abs(cFrame.value.Position.Z) < 2000) {
-                    if (math.abs(cFrame.value.Position.Y) < 500) {
 
-                        ctx.world.despawn(entityId);
-                        print("[Aura Garbage Collector] Entity removed out of bounds: ", entityId);
-
-                    }
-                }
-            }
-        }
     }
+}
+        )
+
 
 }

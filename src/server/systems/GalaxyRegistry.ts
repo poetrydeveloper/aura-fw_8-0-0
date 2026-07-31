@@ -63,12 +63,13 @@ import * as Constants from "../../shared/constants";
 export class GalaxyRegistry {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
 
 
+    const Identifiers = ['ENEMY_INTERCEPTOR', 'PLAYER', 'PLASMA_BOLT'] as const;
+    const Factions = ['ALIENS', 'HUMANS', 'NEUTRAL'] as const;
+        )
+        )
 
-        const Identifiers = ['ENEMY_INTERCEPTOR', 'PLAYER', 'PLASMA_BOLT'] as const;
-        const Factions = ['ALIENS', 'HUMANS', 'NEUTRAL'] as const;
-    }
 
 }

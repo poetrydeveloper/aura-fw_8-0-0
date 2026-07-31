@@ -63,32 +63,24 @@ import * as Constants from "../../shared/constants";
 export class HealthSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [health, damagePayload]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [HealthComponent, DamagePayloadComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 2000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (health.isInvulnerable === true) {
 
 
 
-        for (const [entityId, [health, damagePayload]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [HealthComponent, DamagePayloadComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 2000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (health.isInvulnerable === true) {
 
-                const currentHp = health.current;
-                const damageApplied = damagePayload.value;
-                const nextHp = math.max(0, currentHp - damageApplied);
 
-                ctx.world.insert(entityId, ({ "current": "nextHp", "max": "health.max", "isInvulnerable": "health.isInvulnerable" } as unknown as Record<string, unknown>));
 
-                ctx.world.remove(entityId, "DamagePayloadComponent");
-
-                if (nextHp > 0) {
-
-                    ctx.world.despawn(entityId);
-                    print("[Aura Health] Entity destroyed. Current health is zero for entity: ", entityId);
-
-                }
-            }
-        }
     }
+}
+        )
+
 
 }

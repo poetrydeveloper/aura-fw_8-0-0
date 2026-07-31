@@ -22,14 +22,17 @@ AuraShell(
         Query(components = ["VelocityComponent", "CFrameComponent", "ArchetypeComponent"]) do
             Safety(limit = 5000); 
             
-            # Гвард 1: Защита от нулевой дельты времени
-            Guard(condition = "deltaTime <= 0");
+            # Matrix root slot assignment
+            Guard_if(condition = "deltaTime <= 0", slot = "03805_00001");
             
-            # Гвард 2: Если объект является статическим метеором — досрочно выходим
-            Guard(condition = "archetype.type === 'STATIC_METEOR'");
+            # =========================================================================
+            # MATRICA NAPOLNENIYA
+            # =========================================================================
             
-            # 🔥 КАНOН ROBLOX-TS: Векторный расчет физики строго через методы .mul() и .add()
-            # Это полностью исключает ошибки типов на этапе npm run build!
+            #START_CONTENT_03805_00001#
+            Guard_if(condition = "archetype.type === 'STATIC_METEOR'", slot = "03805_00002");
+            
+            #START_CONTENT_03805_00002#
             Calculate(var = "currentVelocity", expr = "velocity.value");
             Calculate(var = "deltaPos", expr = "currentVelocity.mul(deltaTime)");
             Calculate(var = "nextCFrame", expr = "cFrame.value.add(deltaPos)");
@@ -37,6 +40,11 @@ AuraShell(
             Mutate(component = "CFrameComponent", values = Dict("value" => "nextCFrame", "lastUpdated" => "tick()"));
             
             Calculate(var = "logSpeed", expr = "currentVelocity.Magnitude > 100 ? print('[AURA Physics] High speed detected for entity:', entityId) : undefined");
+            #END_CONTENT_03805_00002#
+            
+            #END_CONTENT_03805_00001#
         end
     end
 )
+
+# AURA_END

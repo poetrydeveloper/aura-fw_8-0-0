@@ -63,29 +63,21 @@ import * as Constants from "../../shared/constants";
 export class MovementSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
+
+
+    for(const [entityId, [velocity, cFrame, archetype]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [VelocityComponent, CFrameComponent, ArchetypeComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 5000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+
+    if (deltaTime <= 0) {
 
 
 
-        for (const [entityId, [velocity, cFrame, archetype]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [VelocityComponent, CFrameComponent, ArchetypeComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 5000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
-
-            if (deltaTime <= 0) {
-
-                if (archetype.type === 'STATIC_METEOR') {
-
-                    const currentVelocity = velocity.value;
-                    const deltaPos = currentVelocity.mul(deltaTime);
-                    const nextCFrame = cFrame.value.add(deltaPos);
-
-                    ctx.world.insert(entityId, ({ "value": "nextCFrame", "lastUpdated": "tick()" } as unknown as Record<string, unknown>));
-
-                    const logSpeed = currentVelocity.Magnitude > 100 ? print('[AURA Physics] High speed detected for entity:', entityId) : undefined;
-                }
-            }
-        )
-
-        }
 
     }
+}
+        )
+
+
+}

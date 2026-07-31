@@ -23,19 +23,30 @@ AuraShell(
         Query(components = ["ArchetypeComponent", "CFrameComponent", "HealthComponent"]) do
             Safety(limit = 100); 
             
-            # 🔥 БЛOЧНЫЙ КАНOН: Каскад гвардов раскрывается через вложенные do-блоки
-            Guard(condition = "archetype.type === 'ENEMY_INTERCEPTOR'") do
-                Guard(condition = "health.current > 0") do
-                    
-                    Calculate(var = "deathPos", expr = "cFrame.value.Position");
-                    Calculate(var = "randomX", expr = "deathPos.X");
-                    
-                    ctx.world.despawn(entityId);
-                    
-                    print("[Aura Visual] Entity destroyed. Particles generated at position X: ", randomX);
-                    
-                end
-            end
+            # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Корневой декларативный слот
+            Guard_if(condition = "archetype.type === 'ENEMY_INTERCEPTOR'", slot = "03805_00001");
+            
+            # =========================================================================
+            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # =========================================================================
+            
+            #START_CONTENT_03805_00001#
+            Guard_if(condition = "health.current > 0", slot = "03805_00002");
+            
+            #START_CONTENT_03805_00002#
+            Calculate(var = "deathPos", expr = "cFrame.value.Position");
+            Calculate(var = "randomX", expr = "deathPos.X");
+            
+            ctx.world.despawn(entityId);
+            
+            print("[Aura Visual] Entity destroyed. Particles generated at position X: ", randomX);
+            #END_CONTENT_03805_00002#
+            
+            #END_CONTENT_03805_00001#
         end
     end
 )
+
+# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
+# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
+# AURA_END

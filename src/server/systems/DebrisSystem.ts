@@ -63,28 +63,29 @@ import * as Constants from "../../shared/constants";
 export class DebrisSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void
 
 
+    for(const [entityId, [archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent]>) {
+    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+    if (++(globalThis as any).safetyCounter > 1000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-        for (const [entityId, [archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent]>) {
-            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-            if (++(globalThis as any).safetyCounter > 1000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
+    if (archetype.type === "PLASMA_BOLT") {
+        if (math.abs(cFrame.value.Position.X) > 2000) {
 
-            if (archetype.type === "PLASMA_BOLT") {
-                if (math.abs(cFrame.value.Position.X) > 2000) {
-                    ctx.world.despawn(entityId);
-                    print("[Aura Garbage Collector] Entity removed out of bounds: ", entityId);
-                }
+        }
+
+        if (archetype.type === "ENEMY_INTERCEPTOR") {
+            if (math.abs(cFrame.value.Position.X) > 3000) {
+
             }
 
-            if (archetype.type === "ENEMY_INTERCEPTOR") {
-                if (math.abs(cFrame.value.Position.X) > 3000) {
-                    ctx.world.despawn(entityId);
-                    print("[Aura Garbage Collector] Entity removed out of bounds: ", entityId);
-                }
-            }
+
+
+
         }
     }
+        )
+
 
 }

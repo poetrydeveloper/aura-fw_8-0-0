@@ -114,7 +114,7 @@ export class CodeWeaver {
                     // Санитарный линтер-адаптер под rbxtsc
                     const fixedBody = applyRobloxStrictFixes(rawBody);
                     
-                    fileContent += `    public ${mName}(${params.join(', ')}): ${record.get('outputType') || 'void'} {\n${fixedBody}\n    }\n\n`;
+                    fileContent += `    public ${mName}(${params.join(', ')}): ${record.get('outputType') || 'void'} ${fixedBody}\n\n`;
                     if (record.get('id')) { 
                         mapProjectData[targetRelPath] = mapProjectData[targetRelPath] || []; 
                         mapProjectData[targetRelPath].push(record.get('id')); 
