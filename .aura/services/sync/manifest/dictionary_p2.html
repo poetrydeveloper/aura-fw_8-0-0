@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Aura-8 Спецификация: Пять Великих Макросов</title>
+    <style>
+        body { font-family: monospace; line-height: 1.5; background: #121212; color: #e0e0e0; padding: 20px; }
+        h1 { color: #00ff66; border-bottom: 2px solid #00ff66; padding-bottom: 5px; }
+        h2 { color: #00e1ff; }
+        code { background: #1e1e1e; color: #ffcc00; padding: 2px 5px; border-radius: 3px; }
+        pre { background: #1e1e1e; padding: 15px; border-left: 5px solid #00ff66; color: #f92672; }
+        .keyword { color: #66d9ef; font-weight: bold; }
+        .string { color: #e6db74; }
+        .comment { color: #75715e; font-style: italic; }
+        .rule { background: #272822; padding: 10px; margin: 10px 0; border: 1px dashed #ff6188; }
+    </style>
+</head>
+<body>
+
+    <h1>СТРАНИЦА 2. ПЯТЬ ВЕЛИКИХ МАКРOСOВ УПРАВЛЕНИЯ ВНУТРИ RENDER = FUNCTION(CTX)</h1>
+    
+    <div class="rule">
+        <strong>ЖЕСТКИЙ ЗАКОН ТОКЕНАЙЗЕРА:</strong> Абсолютно все макросы внутри тела функции <code>render</code> обязаны записываться строго в <u>одну физическую строку</u>. Любой перенос строки внутри макроса, аргумента или словаря ломает посимвольный парсер ядра Ткача и бракуется на входе. На конце каждого плоского макроса обязана стоять точка с запятой <code>;</code>.
+    </div>
+
+    <h2>1. Макрос Query (Корневой ECS-итератор)</h2>
+    <p>Открывает блок верхнего уровня для перебора сущностей, содержащих указанные компоненты. Требует закрытия через <code>end</code>.</p>
+    <pre><span class="keyword">Query</span>(components = [<span class="string">"ArchetypeComponent"</span>, <span class="string">"CFrameComponent"</span>]) <span class="keyword">do</span></pre>
+
+    <h2>2. Макрос Safety (Предохранитель итераций)</h2>
+    <p>Обязан идти <u>самой первой строкой</u> сразу после открытия любого do-блока цикла. Ограничивает лимит перебора для предотвращения краша сервера.</p>
+    <pre>    <span class="keyword">Safety</span>(limit = 1000);</pre>
+
+    <h2>3. Макрос Guard (Ранний возврат / Прерывание)</h2>
+    <p>Разворачивается транслятором в конструкцию <code>if (!(condition)) continue;</code>. Служит для фильтрации сущностей. Текст условия обязан быть валидным JS-выражением в одну строку.</p>
+    <pre>    <span class="keyword">Guard</span>(condition = <span class="string">"archetype.type === 'PLAYER'"</span>);</pre>
+
+    <h2>4. Макрос Calculate (Локальное вычисление)</h2>
+    <p>Объявляет во внутреннем скоупе цикла неизменяемую TypeScript-константу <code>const имя = выражение;</code> для математических расчетов.</p>
+    <pre>    <span class="keyword">Calculate</span>(var = <span class="string">"playerPos"</span>, expr = <span class="string">"cFrame.value.Position"</span>);</pre>
+
+    <h2>5. Макрос Mutate (Атомарное изменение компонента)</h2>
+    <p>Единственный легальный способ изменить данные компонента в ОЗУ игрового мира Matter ECS. Изменяемые поля передаются плоским словарем в одну строчку.</p>
+    <pre>    <span class="keyword">Mutate</span>(component = <span class="string">"VelocityComponent"</span>, values = Dict(<span class="string">"value" => "targetVelocity"</span>, <span class="string">"targetEntityId" => "targetEntityId"</span>));</pre>
+
+    <h2>6. Макрос NestedQuery (Вложенный ECS-итератор целей)</h2>
+    <p>Используется внутри корневого Query для организации поиска связей (выбор цели ИИ, просчет коллизий). Нативно разворачивает переменные целевой сущности с префиксом <code>target</code> (например, <code>targetCFrame</code>). Требует закрытия через <code>end</code>.</p>
+    <pre>    <span class="keyword">NestedQuery</span>(target = <span class="string">"ENEMY_INTERCEPTOR"</span>) <span class="keyword">do</span></pre>
+
+</body>
+</html>

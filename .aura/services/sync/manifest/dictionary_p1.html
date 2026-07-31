@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Aura-8 Спецификация: Контракт метаданных</title>
+    <style>
+        body { font-family: monospace; line-height: 1.5; background: #121212; color: #e0e0e0; padding: 20px; }
+        h1 { color: #00ff66; border-bottom: 2px solid #00ff66; padding-bottom: 5px; }
+        h2 { color: #00e1ff; }
+        code { background: #1e1e1e; color: #ffcc00; padding: 2px 5px; border-radius: 3px; }
+        pre { background: #1e1e1e; padding: 15px; border-left: 5px solid #00ff66; overflow-x: auto; color: #a9dc76; }
+        .critical { color: #ff6188; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+        th { background: #1a1a1a; color: #00e1ff; }
+    </style>
+</head>
+<body>
+
+    <h1>СТРАНИЦА 1. КАНOН ВНЕШНЕЙ СТРУКТУРЫ И СЕМАНТИЧЕСКИХ МЕТАДАННЫХ v38.9.100</h1>
+    <p>Каждая ракушка Аура-8 обязана инициализироваться строго через вызов конструктора <code>AuraShell(...)</code>. Использование любого глобального кода вне тела конструктора или объявление кастомных функций верхнего уровня <span class="critical">категорически запрещено</span>.</p>
+
+    <h2>1. Жесткая схема обязательных корневых атрибутов:</h2>
+    <table>
+        <tr>
+            <th>Атрибут</th>
+            <th>Тип данных</th>
+            <th>Валидация / Ограничение</th>
+        </tr>
+        <tr>
+            <td><code>id</code></td>
+            <td>String (Кавычки)</td>
+            <td>Уникальный алфавитно-цифровой идентификатор ракушки в нижнем регистре через подчеркивание.</td>
+        </tr>
+        <tr>
+            <td><code>status</code></td>
+            <td>String (Кавычки)</td>
+            <td>Строго фиксированное значение: <code>"active"</code>.</td>
+        </tr>
+        <tr>
+            <td><code>version</code></td>
+            <td>Number (Целое)</td>
+            <td>Целое положительное число (инкремент версии графа).</td>
+        </tr>
+        <tr>
+            <td><code>vocabularyContract</code></td>
+            <td>String (Кавычки)</td>
+            <td>Строго фиксированное значение: <code>"Aura_Galaxy_Vocabulary_v7.0"</code>.</td>
+        </tr>
+    </table>
+
+    <h2>2. Жесткая схема словаря meta = Dict(...)</h2>
+    <p>Содержит технический паспорт для генератора Ткача. Любые кастомные ключи приводят к отторжению файла валидатором.</p>
+    <ul>
+        <li><code>"executionSide"</code>: Допустимые значения только <code>"Server"</code>, <code>"Client"</code> или <code>"Shared"</code>.</li>
+        <li><code>"flameworkPattern"</code>: Допустимые значения только <code>"MatterSystem"</code> (для логики) или <code>"GlobalConstants"</code> (для реестров).</li>
+        <li><code>"className"</code>: Строго совпадает с физическим именем файла на хосте Windows (без расширения <code>.jl</code>).</li>
+        <li><code>"methodName"</code>: Имя исполняемого метода (обычно совпадает с задачей системы).</li>
+        <li><code>"context"</code>: Краткое текстовое описание задачи. <span class="critical">Запрещено</span> использовать внутри строки латинские буквы e-n-d подряд!</li>
+    </ul>
+
+    <h2>3. Жесткая схема словаря perspectives = Dict(...)</h2>
+    <p>Описывает граф семантических связей субъект-действие-объект (SVO) и dataflow для Memgraph СУБД [1, 2].</p>
+    <pre>
+    perspectives = Dict(
+        "semanticSvo" => Dict("subject" => "ИмяСистемы", "action" => "Mutates|Triggers|Defines", "object" => "ИмяКомпонента"),
+        "dataFlow" => Dict("reads" => ["МассивКомпонентов"], "mutates" => ["МассивКомпонентов"])
+    )
+    </pre>
+
+</body>
+</html>

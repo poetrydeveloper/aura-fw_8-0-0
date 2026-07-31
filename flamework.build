@@ -15,7 +15,8 @@
 		"aura-roblox-game:out/server/systems/ExplosionSystem@ExplosionSystem": "server/systems/ExplosionSystem@ExplosionSystem",
 		"aura-roblox-game:out/server/systems/UiScoreSystem@UiScoreSystem": "server/systems/UiScoreSystem@UiScoreSystem",
 		"aura-roblox-game:out/server/systems/GameOverSystem@GameOverSystem": "server/systems/GameOverSystem@GameOverSystem",
-		"aura-roblox-game:out/server/systems/DebrisSystem@DebrisSystem": "server/systems/DebrisSystem@DebrisSystem"
+		"aura-roblox-game:out/server/systems/DebrisSystem@DebrisSystem": "server/systems/DebrisSystem@DebrisSystem",
+		"aura-roblox-game:out/server/systems/GalaxyRegistry@GalaxyRegistry": "server/systems/GalaxyRegistry@GalaxyRegistry"
 	},
 	"metadata": {}
 }

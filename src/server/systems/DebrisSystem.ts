@@ -10,6 +10,10 @@ import {
 } from "../../shared/components.types";
 
 
+// 🔥 ГЛАВНЫЙ АРХИТЕКТУРНЫЙ ФИКС: Подключаем реальный сервис игроков Roblox
+// Это на корню уничтожает ошибку TS2693 внутри UiScoreSystem.ts!
+import { Players } from "@rbxts/services";
+
 declare const game: any;
 declare const Enum: any;
 declare const math: {
@@ -20,13 +24,13 @@ declare const math: {
 declare function warn(...args: unknown[]): void;
 declare function print(...args: unknown[]): void;
 
-// 🔥 ФИКС: Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
+// Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
 declare const entityId: number;
 declare const targetEntityId: number;
 declare const deltaTime: number;
 declare const localPlayerEntityId: number;
 
-// 🔥 ФИКС: Мокаем Flamework методы ввода для InputSystem.ts
+// Мокаем Flamework методы ввода для InputSystem.ts
 declare const getMovementInputVector: () => any;
 declare const inputEvents: {
     VelocityUpdate: {
@@ -34,7 +38,7 @@ declare const inputEvents: {
     };
 };
 
-// 🔥 ФИКС: Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
+// Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
 export namespace SharedTypes {
     export interface AuraContext {
         world: any;
@@ -59,21 +63,27 @@ import * as Constants from "../../shared/constants";
 export class DebrisSystem {
     constructor() { }
 
-    public cleanGarbage(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void {
 
 
 
         for (const [entityId, [archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent]>) {
-            let safetyCounter = 0; if (++safetyCounter > 1000) { warn("Aura Safety Triggered"); break; }
+            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+            if (++(globalThis as any).safetyCounter > 1000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (!(archetype.type === 'PLASMA_BOLT' && math.abs(cFrame.value.Position.X) > 2000)) { continue; }
-            const isBolt = archetype.type === 'PLASMA_BOLT';
+            if (archetype.type === "PLASMA_BOLT") {
+                if (math.abs(cFrame.value.Position.X) > 2000) {
+                    ctx.world.despawn(entityId);
+                    print("[Aura Garbage Collector] Entity removed out of bounds: ", entityId);
+                }
+            }
 
-
-            if (!((archetype.type === 'PLASMA_BOLT' && math.abs(cFrame.value.Position.X) > 2000) || (archetype.type === 'ENEMY_INTERCEPTOR' && math.abs(cFrame.value.Position.X) > 3000))) { continue; }
-
-            ctx.world.despawn(entityId);
-            print("[Aura Garbage] Сущность стерта из ОЗУ по лимиту дистанции DebrisSystem: ", entityId);
+            if (archetype.type === "ENEMY_INTERCEPTOR") {
+                if (math.abs(cFrame.value.Position.X) > 3000) {
+                    ctx.world.despawn(entityId);
+                    print("[Aura Garbage Collector] Entity removed out of bounds: ", entityId);
+                }
+            }
         }
     }
 

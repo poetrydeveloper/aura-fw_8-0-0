@@ -10,6 +10,10 @@ import {
 } from "../../shared/components.types";
 
 
+// 🔥 ГЛАВНЫЙ АРХИТЕКТУРНЫЙ ФИКС: Подключаем реальный сервис игроков Roblox
+// Это на корню уничтожает ошибку TS2693 внутри UiScoreSystem.ts!
+import { Players } from "@rbxts/services";
+
 declare const game: any;
 declare const Enum: any;
 declare const math: {
@@ -20,13 +24,13 @@ declare const math: {
 declare function warn(...args: unknown[]): void;
 declare function print(...args: unknown[]): void;
 
-// 🔥 ФИКС: Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
+// Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
 declare const entityId: number;
 declare const targetEntityId: number;
 declare const deltaTime: number;
 declare const localPlayerEntityId: number;
 
-// 🔥 ФИКС: Мокаем Flamework методы ввода для InputSystem.ts
+// Мокаем Flamework методы ввода для InputSystem.ts
 declare const getMovementInputVector: () => any;
 declare const inputEvents: {
     VelocityUpdate: {
@@ -34,7 +38,7 @@ declare const inputEvents: {
     };
 };
 
-// 🔥 ФИКС: Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
+// Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
 export namespace SharedTypes {
     export interface AuraContext {
         world: any;
@@ -59,23 +63,10 @@ import * as Constants from "../../shared/constants";
 export class EnemySpawnSystem {
     constructor() { }
 
-    public spawnWaves(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void {
 
 
 
-        const randomX = math.min(500, math.max(-500, 200));
-
-        if (!(math.abs(randomX) >= 1000)) { continue; }
-
-        if (!(tick() % 5 > 0.1)) { continue; }
-
-        ctx.world.insert(entityId, ({} as unknown as Record<string, unknown>));
-        component = "ArchetypeComponent",
-            values = Dict(
-                "type" => "'ENEMY_INTERCEPTOR'",
-                "faction" => "'ALIENS'",
-                "mass" => "100",
-                "targetEntityId" => "ctx.world.spawn()" # Вызов генерации ID намертво изолирован внутри Dict
     }
 
 }

@@ -5,11 +5,12 @@ AuraShell(
     vocabularyContract = "Aura_Galaxy_Vocabulary_v7.0",
     
     meta = Dict(
+        "oddLayerIso34503" => 5,
         "executionSide" => "Server",
         "flameworkPattern" => "MatterSystem",
         "className" => "MovementSystem",
         "methodName" => "updateMovement",
-        "context" => "Серверный просчет физики и инерции перемещения объектов Галактики по стандарту v38.5"
+        "context" => "Serverny raschet fiziki i inercii peremescheniya"
     ),
     
     perspectives = Dict(
@@ -19,25 +20,23 @@ AuraShell(
     
     render = function(ctx)
         Query(components = ["VelocityComponent", "CFrameComponent", "ArchetypeComponent"]) do
-            Safety(limit = 5000); # Канон: Теперь строго первой строкой и с точкой с запятой
+            Safety(limit = 5000); 
             
-            # Гвард 1: Защита от нулевого дельты времени
+            # Гвард 1: Защита от нулевой дельты времени
             Guard(condition = "deltaTime <= 0");
             
-            # Гвард 2: Если объект является статическим метеором — досрочно выходим (он не двигается)
+            # Гвард 2: Если объект является статическим метеором — досрочно выходим
             Guard(condition = "archetype.type === 'STATIC_METEOR'");
             
-            # Векторный расчет (Ткач сгенерирует переменные velocity и cFrame строго в camelCase)
+            # 🔥 КАНOН ROBLOX-TS: Векторный расчет физики строго через методы .mul() и .add()
+            # Это полностью исключает ошибки типов на этапе npm run build!
             Calculate(var = "currentVelocity", expr = "velocity.value");
             Calculate(var = "deltaPos", expr = "currentVelocity.mul(deltaTime)");
             Calculate(var = "nextCFrame", expr = "cFrame.value.add(deltaPos)");
             
-            # Атомарная мутация матрицы трансформации CFrame в ОЗУ мира. На конце строго ;
             Mutate(component = "CFrameComponent", values = Dict("value" => "nextCFrame", "lastUpdated" => "tick()"));
             
-            # Инкапсулируем условный логгер в нативный тернарный вызов TypeScript-строкой через Calculate,
-            # чтобы не ломать бесскобочный баланс макросов Julia
-            Calculate(var = "logSpeed", expr = "currentVelocity.Magnitude > 100 ? print('[AURA Physics] Высокая скорость сущности:', entityId) : null");
+            Calculate(var = "logSpeed", expr = "currentVelocity.Magnitude > 100 ? print('[AURA Physics] High speed detected for entity:', entityId) : undefined");
         end
     end
 )

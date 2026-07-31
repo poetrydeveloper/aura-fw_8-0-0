@@ -11,7 +11,7 @@ AuraShell(
         "className" => "EnemyAiSystem",
         "methodName" => "updateAi",
         "uiTrigger" => "Heartbeat",
-        "context" => "Исправленный расчет векторов движения ИИ перехватчиков строго по канону v38.5"
+        "context" => "Raschet vectorov dvizheniya AI dlya interceptorov"
     ),
     
     perspectives = Dict(
@@ -21,25 +21,23 @@ AuraShell(
     
     render = function(ctx)
         Query(components = ["ArchetypeComponent", "CFrameComponent"]) do
-            Safety(limit = 10); # Канон: Теперь строго первой строкой внутри цикла
+            Safety(limit = 10); 
             
-            # Проверяем, является ли текущая сущность игроком. Если нет — пропускаем.
-            Guard(condition = "archetype.type === 'PLAYER'"); 
-            
-            # Кэшируем позицию игрока (Транслятор сделает camelCase: cFrame с большой 'F')
-            Calculate(var = "playerPos", expr = "cFrame.value.Position");
-            
-            NestedQuery(target = "ENEMY_INTERCEPTOR") do
-                # Внутри NestedQuery Ткач соберет переменную targetCFrame (с большой 'F')
-                Calculate(var = "enemyPos", expr = "targetCFrame.value.Position");
+            # 🔥 БЛOЧНЫЙ КАНOН: Открываем тело do-блока Guard. Никаких continue на выходе!
+            Guard(condition = "archetype.type === 'PLAYER'") do
                 
-                # Математический расчет вектора направления к игроку
-                Calculate(var = "dirVector", expr = "playerPos.sub(enemyPos).Magnitude > 0 ? playerPos.sub(enemyPos).Unit : new Vector3(0,0,0)");
-                Calculate(var = "aiSpeed", expr = "25");
-                Calculate(var = "targetVelocity", expr = "dirVector.mul(aiSpeed)");
+                Calculate(var = "playerPos", expr = "cFrame.value.Position");
                 
-                # Канон: Мутация вектора скорости врага. targetEntityId перенесен внутрь словаря Dict
-                Mutate(component = "VelocityComponent", values = Dict("value" => "targetVelocity", "targetEntityId" => "targetEntityId"));
+                NestedQuery(target = "ENEMY_INTERCEPTOR") do
+                    Calculate(var = "enemyPos", expr = "targetCFrame.value.Position");
+                    
+                    Calculate(var = "dirVector", expr = "playerPos.sub(enemyPos).Magnitude > 0 ? playerPos.sub(enemyPos).Unit : new Vector3(0, 0, 0)");
+                    Calculate(var = "aiSpeed", expr = "25");
+                    Calculate(var = "calculatedVelocity", expr = "dirVector.mul(aiSpeed)");
+                    
+                    Mutate(component = "VelocityComponent", values = Dict("value" => "calculatedVelocity", "targetEntityId" => "targetEntityId"));
+                end
+                
             end
         end
     end

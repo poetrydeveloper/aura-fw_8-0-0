@@ -6,7 +6,7 @@ AuraComponentPassport(
     flameworkPattern = "Component",
     className = "GalaxyComponents",
     rojoTarget = "src/shared/components.types.ts",
-    context = "Полный семантический паспорт ДНК-компонентов Matter ECS для космического симулятора по стандарту v38.5",
+    context = "Polny semanticheskiy pasport komponentov Matter ECS dlya kosmicheskogo simulatora",
     
     # Спецификация компонентов (Плоская структура, без фигурных скобок!)
     components = Dict(
@@ -38,7 +38,6 @@ AuraComponentPassport(
             "force" => "number",
             "active" => "boolean"
         ),
-        # 👇 ИНЖЕКТ КРИТИЧЕСКИХ КОМПОНЕНТОВ (Страховка контура компиляции)
         "DamageComponent" => Dict(
             "value" => "number"
         ),

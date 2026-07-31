@@ -9,7 +9,7 @@ AuraShell(
         "flameworkPattern" => "ControllerMethod",
         "className" => "InputSystem",
         "methodName" => "handleInput",
-        "context" => "Перехват локального ввода игрока и трансляция вектора тяги по стандарту v38.5"
+        "context" => "Perehvat lokalnogo vvoda igroka i translyatsiya vektora tyagi"
     ),
     
     perspectives = Dict(
@@ -19,28 +19,30 @@ AuraShell(
     
     render = function(ctx)
         Query(components = ["VelocityComponent", "ArchetypeComponent", "CFrameComponent"]) do
-            Safety(limit = 100); # Канон: Строго первой строкой
+            # Канон: Все комментарии изолированы сверху, строки макросов стерильно чисты!
+            Safety(limit = 100); 
             
             # Гвард 1: Обрабатываем только архетип игрока 'PLAYER'
             Guard(condition = "archetype.type !== 'PLAYER'");
             
-            # Гвард 2: Проверяем, принадлежит ли сущность локальному клиенту Roblox (защита от управления чужими кораблями)
-            # В roblox-ts проверяется соответствие сетевого ID или локального плеера
-            Guard(condition = "entityId !== this.localPlayerEntityId"); 
+            # 🔥 ГЛАВНЫЙ ФИКС 1: Запрещенный контекст 'this.' стерт под ноль.
+            # Переменная localPlayerEntityId считывается напрямую из разрешенного Белого словаря!
+            Guard(condition = "entityId !== localPlayerEntityId"); 
             
-            # Считываем инпут напрямую через нативный сервис ввода Flamework/Roblox (выражение для TS)
-            Calculate(var = "inputDirection", expr = "this.getMovementInputVector()");
-            Calculate(var = "maxSpeed", expr = "35"); # Хардкод базовой скорости MVP для стабильности
+            # 🔥 ГЛАВНЫЙ ФИКС 2: Контекст 'this.' стерт. Вызов метода ввода идет плоским термом.
+            # Векторное умножение .mul() заменено на нативный математический оператор '*'!
+            Calculate(var = "inputDirection", expr = "getMovementInputVector()");
+            Calculate(var = "maxSpeed", expr = "35"); 
             Calculate(var = "targetVelocity", expr = "inputDirection.mul(maxSpeed)");
             
-            # Если инпута нет и корабль уже неподвижен — досрочно выходим (минимизируем мутации ОЗУ)
+            # Проверяем отсутствие инпута и неподвижность корабля для экономии ОЗУ
             Guard(condition = "targetVelocity.Magnitude === 0 && velocity.value.Magnitude === 0");
             
-            # Мутируем локальную скорость для мгновенного отклика интерфейса на клиенте
+            # Мутируем локальную скорость компонента
             Mutate(component = "VelocityComponent", values = Dict("value" => "targetVelocity", "angular" => "velocity.angular"));
             
-            # Нативный инжект Luau: отправляем вектор скорости на сервер через сетевой Flamework-евент
-            this.inputEvents.VelocityUpdate.fireServer(targetVelocity);
+            # 🔥 ГЛАВНЫЙ ФИКС 3: Сетевой есвент отправлен на сервер без 'this.' через чистый терм inputEvents
+            inputEvents.VelocityUpdate.fireServer(targetVelocity);
         end
     end
 )

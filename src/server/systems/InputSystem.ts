@@ -10,6 +10,10 @@ import {
 } from "../../shared/components.types";
 
 
+// 🔥 ГЛАВНЫЙ АРХИТЕКТУРНЫЙ ФИКС: Подключаем реальный сервис игроков Roblox
+// Это на корню уничтожает ошибку TS2693 внутри UiScoreSystem.ts!
+import { Players } from "@rbxts/services";
+
 declare const game: any;
 declare const Enum: any;
 declare const math: {
@@ -20,13 +24,13 @@ declare const math: {
 declare function warn(...args: unknown[]): void;
 declare function print(...args: unknown[]): void;
 
-// 🔥 ФИКС: Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
+// Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
 declare const entityId: number;
 declare const targetEntityId: number;
 declare const deltaTime: number;
 declare const localPlayerEntityId: number;
 
-// 🔥 ФИКС: Мокаем Flamework методы ввода для InputSystem.ts
+// Мокаем Flamework методы ввода для InputSystem.ts
 declare const getMovementInputVector: () => any;
 declare const inputEvents: {
     VelocityUpdate: {
@@ -34,7 +38,7 @@ declare const inputEvents: {
     };
 };
 
-// 🔥 ФИКС: Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
+// Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
 export namespace SharedTypes {
     export interface AuraContext {
         world: any;
@@ -59,27 +63,31 @@ import * as Constants from "../../shared/constants";
 export class InputSystem {
     constructor() { }
 
-    public handleInput(ctx: AuraContext): void {
+    public update(ctx: AuraContext, deltaTime: number): void {
 
 
 
         for (const [entityId, [velocity, archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [VelocityComponent, ArchetypeComponent, CFrameComponent]>) {
-            let safetyCounter = 0; if (++safetyCounter > 100) { warn("Aura Safety Triggered"); break; }
+            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+            if (++(globalThis as any).safetyCounter > 100) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (!(archetype.type !== 'PLAYER')) { continue; }
+            if (archetype.type !== 'PLAYER') {
 
-            if (!(entityId !== this.localPlayerEntityId)) { continue; }
+                if (entityId !== localPlayerEntityId) {
 
-            const inputDirection = this.getMovementInputVector();
-            const maxSpeed = 35;
-            const targetVelocity = inputDirection.mul(maxSpeed);
+                    const inputDirection = getMovementInputVector();
+                    const maxSpeed = 35;
+                    const targetVelocity = inputDirection.mul(maxSpeed);
 
-            if (!(targetVelocity.Magnitude === 0 && velocity.value.Magnitude === 0)) { continue; }
+                    if (targetVelocity.Magnitude === 0 && velocity.value.Magnitude === 0) {
 
-            ctx.world.insert(entityId, ({ "value": "targetVelocity", "angular": "velocity.angular" } as unknown as Record<string, unknown>));
+                        ctx.world.insert(entityId, ({ "value": "targetVelocity", "angular": "velocity.angular" } as unknown as Record<string, unknown>));
 
-            this.inputEvents.VelocityUpdate.fireServer(targetVelocity);
+                        inputEvents.VelocityUpdate.fireServer(targetVelocity);
+                    }
+                }
+        )
+
+            }
+
         }
-    }
-
-}

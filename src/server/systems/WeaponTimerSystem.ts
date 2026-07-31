@@ -10,6 +10,10 @@ import {
 } from "../../shared/components.types";
 
 
+// 🔥 ГЛАВНЫЙ АРХИТЕКТУРНЫЙ ФИКС: Подключаем реальный сервис игроков Roblox
+// Это на корню уничтожает ошибку TS2693 внутри UiScoreSystem.ts!
+import { Players } from "@rbxts/services";
+
 declare const game: any;
 declare const Enum: any;
 declare const math: {
@@ -20,13 +24,13 @@ declare const math: {
 declare function warn(...args: unknown[]): void;
 declare function print(...args: unknown[]): void;
 
-// 🔥 ФИКС: Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
+// Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
 declare const entityId: number;
 declare const targetEntityId: number;
 declare const deltaTime: number;
 declare const localPlayerEntityId: number;
 
-// 🔥 ФИКС: Мокаем Flamework методы ввода для InputSystem.ts
+// Мокаем Flamework методы ввода для InputSystem.ts
 declare const getMovementInputVector: () => any;
 declare const inputEvents: {
     VelocityUpdate: {
@@ -34,7 +38,7 @@ declare const inputEvents: {
     };
 };
 
-// 🔥 ФИКС: Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
+// Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
 export namespace SharedTypes {
     export interface AuraContext {
         world: any;
@@ -59,32 +63,29 @@ import * as Constants from "../../shared/constants";
 export class WeaponTimerSystem {
     constructor() { }
 
-    public updateWeaponCooldowns(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void {
 
 
 
         for (const [entityId, [weaponState, archetype]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [WeaponStateComponent, ArchetypeComponent]>) {
-            let safetyCounter = 0; if (++safetyCounter > 2000) { warn("Aura Safety Triggered"); break; }
+            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+            if (++(globalThis as any).safetyCounter > 2000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (!(weaponState.isCharging === false)) { continue; }
+            if (weaponState.isCharging === false) {
+                if (weaponState.nextTimer <= 0) {
 
-            if (!(weaponState.nextTimer <= 0)) { continue; }
+                    const timeDecrement = deltaTime;
+                    const nextCooldown = math.max(0, weaponState.nextTimer - timeDecrement);
 
-            const timeDecrement = deltaTime;
-            const nextCooldown = math.max(0, weaponState.nextTimer - timeDecrement);
+                    ctx.world.insert(entityId, ({ "nextTimer": "nextCooldown", "isCharging": "nextCooldown > 0 ? true : false", "ammoCapacity": "weaponState.ammoCapacity" } as unknown as Record<string, unknown>));
 
-            ctx.world.insert(entityId, ({} as unknown as Record<string, unknown>));
-            component = "WeaponStateComponent",
-                values = Dict(
-                    "nextTimer" => "nextCooldown",
-                    "isCharging" => "nextCooldown > 0 ? true : false", # Если таймер еще тикает — остаемся в режиме зарядки
-        "ammoCapacity" => "weaponState.ammoCapacity"
-                )
-        );
+                    if (nextCooldown > 0) {
 
-            if (!(nextCooldown > 0)) { continue; }
+                        print("[Aura Weapon Grid] Weapon reload complete for entity: ", entityId);
 
-            print("[Aura Weapon Grid] Перезарядка орудий завершена для сущности: ", entityId);
+                    }
+                }
+            }
         }
     }
 

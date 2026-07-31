@@ -1,85 +1,159 @@
+// .aura/services/sync/shell_parser-2.cjs
 const fs = require('fs');
+const path = require('path');
 
 /**
- * ⚡ СИСТЕМНЫЙ ВАЛИДАТОР-ПАРСЕР JULIA v38.8 (ИММУННЫЙ КОНТУР-2)
- * Полный скан, изоляция Меты от Мяса, аппаратный контроль структуры.
+ * 🪐 АВТОНОМНЫЙ ДИНАМИЧЕСКИЙ ДВИЖОК ГЛОССАРИЯ И БАЛАНСА v38.9.125
+ * Автоматически загружает rules_matrix.json и проводит тотальный аудит ракушек.
  */
-function parseShellFile(filePath) {
-    const sourceText = fs.readFileSync(filePath, 'utf8');
-    
-    // УРОВЕНЬ ЗАЩИТЫ 1: АППАРАТНЫЙ КОНТРОЛЬ СТРУКТУРЫ
-    if (!sourceText.includes("AuraShell(") && !sourceText.includes("AuraComponentPassport(") && !sourceText.includes("AuraModel(")) {
-        throw new Error(`[AURA PARSER-2 ERROR] КРИТИЧЕСКИЙ СБОЙ СТРУКТУРЫ в "${filePath}": Отсутствует конструктор манифеста.`);
-    }
-    
-    if (!sourceText.trim().endsWith(")")) {
-        throw new Error(`[AURA PARSER-2 ERROR] КРИТИЧЕСКИЙ СБОЙ СТРУКТУРЫ в "${filePath}": Манифест не закрыт финальной скобкой ')'.`);
+function validateShellBalanceAndGlossary(fileOrText) {
+    if (!fileOrText) {
+        throw new Error("[AURA PARSER FATAL]: Received undefined payload execution vector.");
     }
 
-    const doCount = (sourceText.match(/\bdo\b/g) || []).length;
-    const endCount = (sourceText.match(/\bend\b/g) || []).length;
-    
-    if (sourceText.includes("render = function") && (endCount !== (doCount + 1))) {
-        throw new Error(`[AURA PARSER-2 ERROR] РАЗРЫВ СИНТАКСИСА JULIA в "${filePath}": Нарушен баланс блоков. do: ${doCount}, end: ${endCount}.`);
+    let rawSource = "";
+    let fileName = "inline_buffer.jl";
+
+    // Полиморфный гвард входящего payload (Путь к файлу или сырой текст)
+    if (typeof fileOrText === 'string' && fileOrText.length < 500 && fs.existsSync(fileOrText)) {
+        rawSource = fs.readFileSync(fileOrText, 'utf8');
+        fileName = path.basename(fileOrText);
+    } else {
+        rawSource = fileOrText;
     }
 
-    // УРОВЕНЬ ЗАЩИТЫ 2: ПОЛНЫЙ СКАН С ИЗОЛЯЦИЕЙ МЕТЫ
-    const lines = sourceText.split(/\r?\n/);
-    let shellData = {
-        id: "", pattern: "MatterSystem", className: "", methodName: "update",
-        executionSide: "Server", subject: "Unknown", action: "Updates", object: "Component",
-        rojoTarget: "",
-        codeImplementation: sourceText
+    // 🔥 АВТОМАТИЧЕСКАЯ НАДЁЖНАЯ ЗАГРУЗКА НАШЕГО ИДЕАЛЬНОГО МАНИФЕСТА
+    const matrixPath = path.join(__dirname, 'manifest', 'rules_matrix.json');
+    if (!fs.existsSync(matrixPath)) {
+        throw new Error(`[AURA PARSER FATAL]: Файл матрицы правил не найден по пути: ${matrixPath}`);
+    }
+    const matrix = JSON.parse(fs.readFileSync(matrixPath, 'utf8'));
+
+    const lines = rawSource.split(/\r?\n/);
+    let sanitizedMatrix = "";
+    
+    // =========================================================================
+    // ЭШЕЛОН 1: ИНСПЕКЦИЯ СТРОК И ЧЕРНЫЙ СПИСОК ПРАВИЛ (BLACK LIST SCAN)
+    // =========================================================================
+    lines.forEach((line, index) => {
+        const lineNum = index + 1;
+        let trimmed = line.trim();
+        if (trimmed.startsWith('#') || trimmed === "") return; 
+
+        // Прогоняем строку через Черный список регулярных выражений из JSON
+        const blackList = Array.isArray(matrix.black_list_rules) ? matrix.black_list_rules : [];
+        
+        for (const rule of blackList) {
+            if (!rule.pattern || rule.code.includes('DICT')) continue; 
+            
+            // Передаем флаг "m" (multiline), чтобы регулярные выражения манифеста могли снайперски 
+            // контролировать как отдельные строки, так и многострочные разрывы скобок в rawSource!
+            const regex = new RegExp(rule.pattern, "m");
+            if (regex.test(rawSource)) {
+                throw new Error(`\n| [НАРУШЕНИЕ КАНOНА АУРА-8]\n| Файл: ${fileName}\n| Код правила: ${rule.code}\n| Ошибка: ${rule.message}\n`);
+                }
+        }
+
+        let insideQuotes = false;
+        let quoteChar = null;
+        let cleanLine = "";
+        
+        for (let i = 0; i < line.length; i++) {
+            let char = line[i];
+            let isEscaped = (i > 0 && line[i - 1] === '\\' && (i === 1 || line[i - 2] !== '\\'));
+            
+            if ((char === '"' || char === "'") && !isEscaped) {
+                if (!insideQuotes) {
+                    insideQuotes = true;
+                    quoteChar = char;
+                    cleanLine += char; 
+                    continue;
+                } else if (char === quoteChar) {
+                    insideQuotes = false;
+                    quoteChar = null;
+                    cleanLine += char; 
+                    continue;
+                }
+            }
+            if (char === '#' && !insideQuotes) break;
+            cleanLine += insideQuotes ? ' ' : char; // Очищаем строки для изоляции токенов 'end'
+        }
+        sanitizedMatrix += cleanLine + "\n";
+    });
+    // =========================================================================
+    // ЭШЕЛОН 2: ПРОВЕРКА ПО БЕЛОМУ СЛОВАРЮ ТЕРМИНОВ (WHITE LIST GLOSSARY)
+    // =========================================================================
+    // Собираем все разрешенные слова из структуры манифеста без ошибок контекста
+    const allowedTerms = new Set([
+        ...matrix.white_list_dictionary.system_constants,
+        ...matrix.white_list_dictionary.macros.map(m => m.term),
+        ...matrix.white_list_dictionary.roblox_api.map(r => r.term),
+        ...matrix.white_list_dictionary.runtime_context.map(c => c.term),
+        ...matrix.white_list_dictionary.allowed_components_and_tags,
+        ...matrix.white_list_dictionary.allowed_variables_and_expressions
+    ]);
+
+    // Разбиваем очищенный от кавычек и комментариев код на отдельные слова-токены
+    const allWords = sanitizedMatrix.match(/\b[A-Za-z0-9_]+\b/g) || [];
+    
+    for (const word of allWords) {
+        // Пропускаем чистые числа, чтобы валидатор не блокировал координаты и лимиты
+        if (/^\d+$/.test(word)) continue;
+
+        // Жесткая верификация по Белому глоссарию нашего JSON-документа
+        if (!allowedTerms.has(word)) {
+            throw new Error(`\n| [НАРУШЕНИЕ КАНOНА АУРА-8]\n| Файл: ${fileName}\n| Обнаружен неизвестный терм: "${word}"\n| Ошибка: Данное слово отсутствует в Белом словаре разрешенных терминов.\n| Подсказка: Проверьте опечатки или внесите слово в manifest/rules_matrix.json.\n`);
+        }
+    }
+
+    // =========================================================================
+    // ЭШЕЛОН 3: ТОКЕНИЗАЦИЯ И СТЭКОВЫЙ АНАЛИЗ БАЛАНСА БЛОКОВ (LIFO)
+    // =========================================================================
+    const tokenRegex = /\b(function|do|if|for|while|end)\b/g;
+    const tokens = sanitizedMatrix.match(tokenRegex) || [];
+    const blockStack = [];
+
+    for (const token of tokens) {
+        if (token === 'function' || token === 'do' || token === 'if' || token === 'for' || token === 'while') {
+            blockStack.push({ type: token });
+        } else if (token === 'end') {
+            if (blockStack.length === 0) {
+                throw new Error(`\n| [AURA PARSER ERROR] Критический дисбаланс в файле ${fileName}!\n| Обнаружен сиротский 'end', у которого нет открывающего блока.\n`);
+            }
+            blockStack.pop(); 
+        }
+    }
+
+    if (blockStack.length > 0) {
+        const unclosedScopes = blockStack.map(b => b.type).join(', ');
+        throw new Error(`\n| [AURA PARSER ERROR] Нарушен баланс блоков Джулии в файле ${fileName}.\n| Не закрыты следующие операторы: [${unclosedScopes}].\n`);
+    }
+
+    // =========================================================================
+    // ЭШЕЛОН 4: АВТОНОМНОЕ ИЗВЛЕЧЕНИЕ МЕТАДАННЫХ ДЛЯ ОРКЕСТРАТОРА
+    // =========================================================================
+    const extractParam = (paramName) => {
+        const regex = new RegExp(`\\b${paramName}\\s*=\\s*["']([^"']+)["']`, 'i');
+        const match = rawSource.match(regex);
+        return match ? match[1] : "";
     };
 
-    let insideRenderBlock = false;
-
-    for (let i = 0; i < lines.length; i++) {
-        let trimmed = lines[i].trim();
-        if (trimmed.startsWith("#") || !trimmed) continue;
-
-        if (trimmed.includes("render = function")) insideRenderBlock = true;
-        if (insideRenderBlock) continue;
-
-        if (trimmed.includes('=')) {
-            let parts = trimmed.split('=');
-            let key = parts[0].trim();
-            let val = parts.slice(1).join('=').trim().replace(/^["']|["']\s*,?$/g, '').trim();
-
-            if (key === "id") shellData.id = val;
-            if (key === "flameworkPattern") shellData.pattern = val;
-            if (key === "className") shellData.className = val;
-            if (key === "methodName") shellData.methodName = val;
-            if (key === "executionSide") shellData.executionSide = val;
-            if (key === "rojoTarget") shellData.rojoTarget = val;
-        }
-
-        if (trimmed.includes('=>')) {
-            let parts = trimmed.split('=>');
-            let key = parts[0].trim().replace(/[:"']/g, ""); 
-            let val = parts.slice(1).join('=>').trim().replace(/^["']|["']\s*,?$/g, '').trim();
-
-            if (key === "id") shellData.id = val;
-            if (key === "flameworkPattern" || key === "pattern") shellData.pattern = val;
-            if (key === "className") shellData.className = val;
-            if (key === "methodName") shellData.methodName = val;
-            if (key === "executionSide") shellData.executionSide = val;
-            if (key === "rojoTarget") shellData.rojoTarget = val;
-            if (key === "subject") shellData.subject = val;
-            if (key === "action") shellData.action = val;
-            if (key === "object") shellData.object = val;
-        }
-    }
-
-    // УРОВЕНЬ ЗАЩИТЫ 3: УМНЫЙ ДИНАМИЧЕСКИЙ FALLBACK
-    const fileBaseName = filePath.split(/[\\/]/).pop().replace(/\..*$/, "");
-    if (!shellData.className) shellData.className = fileBaseName;
-    if (!shellData.methodName || shellData.methodName === "update") {
-        const cleanName = shellData.className.replace("System", "");
-        shellData.methodName = `update${cleanName}`;
-    }
-
-    return shellData;
+    return {
+        id: extractParam("id") || "ecs_generated_shell",
+        className: extractParam("className") || path.basename(fileName, '.jl'),
+        methodName: extractParam("methodName") || "update",
+        pattern: extractParam("flameworkPattern") || "MatterSystem",
+        executionSide: extractParam("executionSide") || "Server",
+        rojoTarget: extractParam("rojoTarget") || "src/server/systems",
+        subject: "System",
+        action: "Mutates",
+        object: "Component",
+        codeImplementation: rawSource
+    };
 }
 
-module.exports = { parseShellFile };
+module.exports = {
+    validateShellBalance: validateShellBalanceAndGlossary,
+    parseShellFile: validateShellBalanceAndGlossary,
+    validateShell: validateShellBalanceAndGlossary
+};

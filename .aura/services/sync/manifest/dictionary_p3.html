@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Aura-8 Спецификация: Белый список API</title>
+    <style>
+        body { font-family: monospace; line-height: 1.5; background: #121212; color: #e0e0e0; padding: 20px; }
+        h1 { color: #00ff66; border-bottom: 2px solid #00ff66; padding-bottom: 5px; }
+        h2 { color: #00e1ff; }
+        code { background: #1e1e1e; color: #ffcc00; padding: 2px 5px; border-radius: 3px; }
+        pre { background: #1e1e1e; padding: 12px; border-left: 5px solid #00e1ff; color: #a9dc76; }
+        .critical { color: #ff6188; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+        th { background: #1a1a1a; color: #00e1ff; }
+    </style>
+</head>
+<body>
+
+    <h1>СТРАНИЦА 3. РАЗРЕШЕННЫЙ БЕЛЫЙ СПИСОК (ALLOWED WHITE LIST) ROBLOX API И МАТЕМАТИКИ</h1>
+    <p>Внутри строк макросов <code>Calculate(expr = "...")</code> и <code>Guard(condition = "...")</code> ИИ-Исполнителю разрешено использовать <span class="critical">строго фиксированный</span> набор методов и свойств. Любой вызов вне этого списка блокируется лексическим валидатором на хосте.</p>
+
+    <h2>1. Геометрия пространственных матриц (CFrame Класс Roblox)</h2>
+    <table>
+        <tr>
+            <th>Разрешенный терм</th>
+            <th>Тип возврата</th>
+            <th>Контекст применения и пример использования</th>
+        </tr>
+        <tr>
+            <td><code>.value</code></td>
+            <td>CFrame / Vector3</td>
+            <td>Извлечение чистого Luau-значения из контейнера ECS-компонента Аура-8.</td>
+        </tr>
+        <tr>
+            <td><code>.Position</code></td>
+            <td>Vector3</td>
+            <td>Извлечение трехмерного вектора позиции из CFrame. Пример: <code>cFrame.value.Position</code></td>
+        </tr>
+        <tr>
+            <td><code>.LookVector</code></td>
+            <td>Vector3</td>
+            <td>Извлечение единичного вектора направления взгляда матрицы. Пример: <code>cFrame.value.LookVector</code></td>
+        </tr>
+    </table>
+
+    <h2>2. Трехмерные векторы (Vector3 Класс Roblox)</h2>
+    <table>
+        <tr>
+            <th>Разрешенный терм</th>
+            <th>Тип возврата</th>
+            <th>Контекст применения и пример использования</th>
+        </tr>
+        <tr>
+            <td><code>Vector3.new(x, y, z)</code></td>
+            <td>Vector3</td>
+            <td>Конструктор создания нового вектора. Пример: <code>new Vector3(0, 25, 0)</code> (Ткач сделает автовыравнивание под TS).</td>
+        </tr>
+        <tr>
+            <td><code>.X</code>, <code>.Y</code>, <code>.Z</code></td>
+            <td>Number</td>
+            <td>Чтение отдельных физических осей координат. Пример: <code>math.abs(cFrame.value.Position.X)</code></td>
+        </tr>
+        <tr>
+            <td><code>.Magnitude</code></td>
+            <td>Number</td>
+            <td>Скалярная длина вектора (расстояние). Пример: <code>playerPos.sub(enemyPos).Magnitude</code></td>
+        </tr>
+        <tr>
+            <td><code>.Unit</code></td>
+            <td>Vector3</td>
+            <td>Нормализованный единичный вектор направления. Пример: <code>direction.Unit</code></td>
+        </tr>
+    </table>
+
+    <h2>3. Библиотека Math, Системные функции и Среда Мира</h2>
+    <pre>
+    # Только эти встроенные математические методы Luau / TS гарантированно скомпилируются:
+    - math.abs(val)      # Модуль числа (абсолютное значение осей X/Y/Z)
+    - math.min(a, b)     # Выбор минимального значения (лимитеры скоростей)
+    - math.max(a, b)     # Выбор максимального значения (лимитеры кулдаунов орудий)
+    - math.sin(angle)    # Тригонометрический синус (траектории волн ИИ)
+    - math.cos(angle)    # Тригонометрический косинус
+    - tick()             # Текущее unix-время сервера (для дельт таймеров оружия)
+    - print(...)         # Отладка в Output Roblox Studio
+    - ctx.world.spawn()  # Создание чистой сущности (для спавнера волн ИИ)
+    - ctx.world.despawn()# Физическое удаление сущности из ОЗУ сервера (для сборщика мусора Debris)
+    </pre>
+
+</body>
+</html>

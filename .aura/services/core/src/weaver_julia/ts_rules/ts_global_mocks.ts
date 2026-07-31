@@ -1,8 +1,12 @@
 /**
- * ⚡ МОДЕРНИЗИРОВАННАЯ МАТРИЦА ГЛОБАЛЬНЫХ МОКОВ v38.9.9 (PURE NATIVE)
- * Полное закрытие слепых зон линтера rbxtsc. Внедрена поддержка SharedTypes и локального игрока.
+ * ⚡ МОДЕРНИЗИРОВАННАЯ МАТРИЦА ГЛОБАЛЬНЫХ МОКОВ v38.9.20 (PURE NATIVE & SERVICE INJECT)
+ * Полное закрытие слепых зон линтера rbxtsc. Внедрен нативный импорт Players из @rbxts/services.
  */
 export const tsGlobalMocks = `
+// 🔥 ГЛАВНЫЙ АРХИТЕКТУРНЫЙ ФИКС: Подключаем реальный сервис игроков Roblox
+// Это на корню уничтожает ошибку TS2693 внутри UiScoreSystem.ts!
+import { Players } from "@rbxts/services";
+
 declare const game: any;
 declare const Enum: any;
 declare const math: {
@@ -13,13 +17,13 @@ declare const math: {
 declare function warn(...args: unknown[]): void;
 declare function print(...args: unknown[]): void;
 
-// 🔥 ФИКС: Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
+// Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
 declare const entityId: number;
 declare const targetEntityId: number;
 declare const deltaTime: number;
 declare const localPlayerEntityId: number;
 
-// 🔥 ФИКС: Мокаем Flamework методы ввода для InputSystem.ts
+// Мокаем Flamework методы ввода для InputSystem.ts
 declare const getMovementInputVector: () => any;
 declare const inputEvents: {
     VelocityUpdate: {
@@ -27,7 +31,7 @@ declare const inputEvents: {
     };
 };
 
-// 🔥 ФИКС: Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
+// Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
 export namespace SharedTypes {
     export interface AuraContext {
         world: any;

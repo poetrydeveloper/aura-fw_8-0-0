@@ -11,7 +11,7 @@ AuraShell(
         "className" => "ExplosionSystem",
         "methodName" => "emitParticles",
         "uiTrigger" => "Heartbeat",
-        "context" => "Безопасная генерация эффектов взрыва частиц при смерти врагов по стандарту v38.5"
+        "context" => "Generatsiya effectov vzryva chastic pri smerti vragov"
     ),
     
     perspectives = Dict(
@@ -21,23 +21,21 @@ AuraShell(
     
     render = function(ctx)
         Query(components = ["ArchetypeComponent", "CFrameComponent", "HealthComponent"]) do
-            Safety(limit = 100); # Канон: Строго первой строкой с точкой с запятой
+            Safety(limit = 100); 
             
-            # Гвард 1: Обрабатываем только вражеские перехватчики
-            Guard(condition = "archetype.type === 'ENEMY_INTERCEPTOR'");
-            
-            # Гвард 2: Проверяем смерть. Если здоровье больше нуля — досрочно выходим из итерации
-            Guard(condition = "health.current > 0");
-            
-            # Кэшируем позицию смерти (Ткач сгенерирует cFrame с большой 'F')
-            Calculate(var = "deathPos", expr = "cFrame.value.Position");
-            
-            # ⚠️ ЗАЩИТА ОТ БЕЗКОНЕЧНОГО СПАВНА ЧАСТИЦ: 
-            # Нативно вызываем деспавн сущности из мира прямо в момент фиксации взрыва,
-            # чтобы этот мертвый корабль не взрывался повторно на следующем кадре.
-            ctx.world.despawn(entityId);
-            
-            print("[Aura Visual] Корабль уничтожен. Вспышка частиц сгенерирована в точке: ", deathPos.X);
+            # 🔥 БЛOЧНЫЙ КАНOН: Каскад гвардов раскрывается через вложенные do-блоки
+            Guard(condition = "archetype.type === 'ENEMY_INTERCEPTOR'") do
+                Guard(condition = "health.current > 0") do
+                    
+                    Calculate(var = "deathPos", expr = "cFrame.value.Position");
+                    Calculate(var = "randomX", expr = "deathPos.X");
+                    
+                    ctx.world.despawn(entityId);
+                    
+                    print("[Aura Visual] Entity destroyed. Particles generated at position X: ", randomX);
+                    
+                end
+            end
         end
     end
 )

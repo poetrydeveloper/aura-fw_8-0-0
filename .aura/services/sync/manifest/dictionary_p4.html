@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Aura-8 Спецификация: Черный список запретов</title>
+    <style>
+        body { font-family: monospace; line-height: 1.5; background: #121212; color: #e0e0e0; padding: 20px; }
+        h1 { color: #ff6188; border-bottom: 2px solid #ff6188; padding-bottom: 5px; }
+        h2 { color: #ff926b; }
+        code { background: #1e1e1e; color: #ff6188; padding: 2px 5px; border-radius: 3px; font-weight: bold; }
+        .solution { color: #a9dc76; font-weight: bold; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #333; padding: 10px; text-align: left; }
+        th { background: #1a1a1a; color: #ff6188; }
+        .warning-box { background: #271a24; border: 2px dashed #ff6188; padding: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+    <h1>СТРАНИЦА 4. АППАРАТНЫЙ ЩИТ СИСТЕМЫ: ТАБЛИЦА СТРОГИХ ЗАПРЕТОВ ДЛЯ ИИ-АРХИТЕКТОРА</h1>
+    
+    <div class="warning-box">
+        <strong>ВНИМАНИЕ ВСЕХ СЛЕДУЮЩИХ АГЕНТОВ-ИИ:</strong> Обнаружение любого терма или паттерна из левой колонки таблицы ниже внутри тела ракушки приведет к <span class="critical">моментальной жесткой блокировке</span> деплоя на этапе лексического анализа глоссария в shell_parser-2.cjs.
+    </div>
+
+    <h2>Таблица запрещенных легаси-костылей и их каноничные замены:</h2>
+    <table>
+        <tr>
+            <th>❌ ЗАПРЕЩЕННЫЙ ТЕРМ / ПАТТЕРН</th>
+            <th>ПРИЧИНА КРАША В ROBLOX-TS / DOСKER</th>
+            <th>🟢 УТВЕРЖДЕННАЯ СЛОВАРНАЯ ЗАМЕНА</th>
+        </tr>
+        <tr>
+            <td><code>this.</code> (например: <code>this.inputEvents</code>)</td>
+            <td>В ECS-системах Matter все методы статические, контекста класса <code>this</code> физически не существует.</td>
+            <td>Писать переменную плоской сущностью верхнего уровня: <span class="solution"><code>inputEvents.VelocityUpdate...</code></span></td>
+        </tr>
+        <tr>
+            <td><code>.sub()</code>, <code>.add()</code>, <code>.mul()</code> для векторов</td>
+            <td>Вызывает жесткий конфликт типов Union-литералов в линтере rbxtsc. Нативные Vector3 не содержат таких методов.</td>
+            <td>Использовать только стандартные математические операторы: <span class="solution"><code>-</code>, <code>+</code>, <code>*</code></span></td>
+        </tr>
+        <tr>
+            <td><code>Registry(...)</code></td>
+            <td>Ткач внутри докера не имеет правил разбора этого макроса, что приводит к пролазу сырого кода в TypeScript.</td>
+            <td>Объявлять реестры через Calculate констант: <span class="solution"><code>Calculate(var="Identifiers", expr="[...] as const")</code></span></td>
+        </tr>
+        <tr>
+            <td>Хвостовые комментарии <code>#</code> на строках макросов</td>
+            <td>Посимвольный токенайзер докера не умеет отрезать хвостовые решетки, из-за чего кириллица ломает TS-синтаксис.</td>
+            <td>Выносить комментарии строго наверх, <span class="solution">на отдельную новую строку до начала макроса</span>.</td>
+        </tr>
+        <tr>
+            <td>Многострочный разрыв макросов</td>
+            <td>Express-парсер ядра Ткача читает и обрабатывает аргументы строго построчно (через проверку стартовых маркеров).</td>
+            <td>Сжимать тело макроса строго <span class="solution">в один монолитный однострочный текст</span>.</td>
+        </tr>
+    </table>
+
+</body>
+</html>

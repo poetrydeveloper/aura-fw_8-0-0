@@ -10,6 +10,10 @@ import {
 } from "../../shared/components.types";
 
 
+// 🔥 ГЛАВНЫЙ АРХИТЕКТУРНЫЙ ФИКС: Подключаем реальный сервис игроков Roblox
+// Это на корню уничтожает ошибку TS2693 внутри UiScoreSystem.ts!
+import { Players } from "@rbxts/services";
+
 declare const game: any;
 declare const Enum: any;
 declare const math: {
@@ -20,13 +24,13 @@ declare const math: {
 declare function warn(...args: unknown[]): void;
 declare function print(...args: unknown[]): void;
 
-// 🔥 ФИКС: Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
+// Объявляем глобальные переменные итераторов и членов сетевого контекста игрока
 declare const entityId: number;
 declare const targetEntityId: number;
 declare const deltaTime: number;
 declare const localPlayerEntityId: number;
 
-// 🔥 ФИКС: Мокаем Flamework методы ввода для InputSystem.ts
+// Мокаем Flamework методы ввода для InputSystem.ts
 declare const getMovementInputVector: () => any;
 declare const inputEvents: {
     VelocityUpdate: {
@@ -34,7 +38,7 @@ declare const inputEvents: {
     };
 };
 
-// 🔥 ФИКС: Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
+// Создаем обратную совместимость для систем, ищущих легаси неймспейс SharedTypes
 export namespace SharedTypes {
     export interface AuraContext {
         world: any;
@@ -59,22 +63,26 @@ import * as Constants from "../../shared/constants";
 export class ExplosionSystem {
     constructor() { }
 
-    public emitParticles(ctx: AuraContext, deltaTime: number): void {
+    public update(ctx: AuraContext, deltaTime: number): void {
 
 
 
         for (const [entityId, [archetype, cFrame, health]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent, HealthComponent]>) {
-            let safetyCounter = 0; if (++safetyCounter > 100) { warn("Aura Safety Triggered"); break; }
+            if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
+            if (++(globalThis as any).safetyCounter > 100) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
 
-            if (!(archetype.type === 'ENEMY_INTERCEPTOR')) { continue; }
+            if (archetype.type === 'ENEMY_INTERCEPTOR') {
+                if (health.current > 0) {
 
-            if (!(health.current > 0)) { continue; }
+                    const deathPos = cFrame.value.Position;
+                    const randomX = deathPos.X;
 
-            const deathPos = cFrame.value.Position;
+                    ctx.world.despawn(entityId);
 
-            ctx.world.despawn(entityId);
+                    print("[Aura Visual] Entity destroyed. Particles generated at position X: ", randomX);
 
-            print("[Aura Visual] Корабль уничтожен. Вспышка частиц сгенерирована в точке: ", deathPos.X);
+                }
+            }
         }
     }
 

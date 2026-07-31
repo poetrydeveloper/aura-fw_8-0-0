@@ -11,7 +11,7 @@ AuraShell(
         "className" => "GameOverSystem",
         "methodName" => "checkDefeat",
         "uiTrigger" => "Heartbeat",
-        "context" => "Мониторинг гибели игрока на сервере и инициация триггера перезапуска по стандарту v38.5"
+        "context" => "Monitoring gibeli igroka na servere i trigger perezapuska"
     ),
     
     perspectives = Dict(
@@ -21,20 +21,16 @@ AuraShell(
     
     render = function(ctx)
         Query(components = ["ArchetypeComponent", "HealthComponent"]) do
-            Safety(limit = 10); # Канон: Точка с запятой на месте, первая строка цикла
+            Safety(limit = 10); 
             
-            # Составной гвард: Пропускаем итерацию, если это НЕ игрок ИЛИ если игрок еще жив
-            # Это мгновенно отсекает лишние вычисления (Early Return)
-            Guard(condition = "archetype.type !== 'PLAYER' || health.current > 0");
-            
-            # Сюда рантайм дойдет СТРОГО в момент, когда текущая сущность — Игрок, и его HP == 0
-            # ⚠️ Вызываем нативный метод перезапуска сессии Roblox API (DataModel:LoadPlaceInstance или TeleportService)
-            # Чтобы предотвратить бесконечный спам, мы можем временно выставить флаг инвульнерабельности 
-            # или выполнить моментальный перезапуск:
-            
-            ctx.world.insert(entityId, SharedTypes.HealthComponent({ current: 0, max: health.max, isInvulnerable: true }));
-            
-            print("[Aura Core] Крах игрока зафиксирован! Запуск контура телепортации и перезапуска плейса...");
+            # 🔥 БЛOЧНЫЙ КАНOН: Guard открывает логическое тело do. continue стерт из ОЗУ.
+            Guard(condition = "archetype.type !== 'PLAYER' || health.current > 0") do
+                
+                Mutate(component = "HealthComponent", values = Dict("current" => "0", "max" => "health.max", "isInvulnerable" => "true"));
+                
+                print("[Aura Core] Player defeat detected. Restarting game loop session...", entityId);
+                
+            end
         end
     end
 )

@@ -1,0 +1,295 @@
+{
+  "version": "38.9.120",
+  "project_name": "aura8",
+  "black_list_rules": [
+    {
+      "code": "AURA-ERR-001",
+      "severity": "CRITICAL",
+      "pattern": "^(?!\\s*#).*this\\.",
+      "message": "Обнаружен запрещенный контекст 'this.'. В ECS-системах Matter все методы статические. Используйте плоские переменные."
+    },
+    {
+      "code": "AURA-ERR-008",
+      "severity": "CRITICAL",
+      "pattern": "(?<!end\\s*\\r?\\n\\s*)end\\s*\\r?\\n\\s*\\)\\s*$",
+      "message": "В ракушках без макроса Query (плоский render) запрещен перенос закрывающей скобки ')' на отдельную строку после 'end'. Прижмите её к финалу: 'end)' для корректной трансляции Flamework-класса."
+    },
+    {
+      "code": "AURA-ERR-002",
+      "severity": "CRITICAL",
+      "pattern": "(Position|Velocity|value)\\s*[-+*]",
+      "message": "В roblox-ts запрещена перегрузка операторов (+, -, *). Используйте нативные методы векторов .sub(), .add(), .mul()."
+    },
+    {
+      "code": "AURA-ERR-003",
+      "severity": "CRITICAL",
+      "pattern": "^\\s*Registry\\(",
+      "message": "Использование макроса 'Registry(...)' запрещено. Объявляйте массивы констант через 'Calculate' с гвардом 'as const'."
+    },
+    {
+      "code": "AURA-ERR-004",
+      "severity": "WARNING",
+      "pattern": "(Mutate|Calculate|Guard|NestedQuery)\\(.*#",
+      "message": "Обнаружен хвостовой комментарий '#' на строке макроса. Выносите комментарии строго на новую строку выше."
+    },
+    {
+      "code": "AURA-ERR-005",
+      "severity": "CRITICAL",
+      "pattern": "SharedTypes\\.",
+      "message": "Использование неймспейса 'SharedTypes' как конструктора функций устарело. Передавайте чистые JSON-литералы компонентов."
+    },
+    {
+      "code": "AURA-ERR-006",
+      "severity": "CRITICAL",
+      "pattern": "Workspace\\.",
+      "message": "Запрещено обращаться к Workspace напрямую из ракушки логики. Все данные о геометрии считываются строго через CFrameComponent."
+    },
+    {
+      "code": "AURA-ERR-007",
+      "severity": "CRITICAL",
+      "pattern": "^\\s*\\b(while|for)\\b",
+      "message": "Обнаружены нативные циклы 'while' или 'for'. В ракушках Julia разрешены только ECS-итераторы 'Query' и 'NestedQuery'."
+    }
+  ],
+  "white_list_dictionary": {
+    "system_constants": [
+      "AuraShell",
+      "Dict",
+      "id",
+      "status",
+      "version",
+      "vocabularyContract",
+      "meta",
+      "perspectives",
+      "render",
+      "function",
+      "components",
+      "target",
+      "do",
+      "end",
+      "limit",
+      "condition",
+      "var",
+      "expr",
+      "component",
+      "values",
+      "continue",
+      "AuraComponentPassport",
+      "flameworkPattern",
+      "className",
+      "rojoTarget",
+      "context",
+      "string",
+      "number",
+      "boolean",
+      "if"
+    ],
+    "macros": [
+      {
+        "term": "Query",
+        "code": "AURA-DICT-MACRO",
+        "message": "Разрешенный макрос корневого ECS-итератора сущностей. Обязан закрываться ключевым словом 'end'."
+      },
+      {
+        "term": "NestedQuery",
+        "code": "AURA-DICT-MACRO",
+        "message": "Разрешенный макрос вложенного ECS-итератора целей/коллизий. Обязан закрываться ключевым словом 'end'."
+      },
+      {
+        "term": "Safety",
+        "code": "AURA-DICT-MACRO",
+        "message": "Разрешенный макрос-предохранитель. Обязан идти первой строкой внутри do-блоков."
+      },
+      {
+        "term": "Guard",
+        "code": "AURA-DICT-MACRO",
+        "message": "Разрешенный макрос раннего возврата (Early Return). Аргумент condition обязан быть валидным JS-выражением."
+      },
+      {
+        "term": "Calculate",
+        "code": "AURA-DICT-MACRO",
+        "message": "Разрешенный макрос объявления локальной TypeScript-константы."
+      },
+      {
+        "term": "Mutate",
+        "code": "AURA-DICT-MACRO",
+        "message": "Разрешенный макрос атомарного изменения компонентов Matter ECS. Принимает плоский словарь Dict в одну строку."
+      }
+    ],
+    "roblox_api": [
+      {
+        "term": "Vector3",
+        "code": "AURA-DICT-ROBLOX",
+        "message": "Нативный класс трехмерного вектора Roblox. Создание строго через оператор new или Vector3.new."
+      },
+      {
+        "term": "CFrame",
+        "code": "AURA-DICT-ROBLOX",
+        "message": "Нативный класс пространственной матрицы CFrame Roblox."
+      },
+      {
+        "term": "Position",
+        "code": "AURA-DICT-ROBLOX",
+        "message": "Разрешенное свойство извлечения Vector3-позиции. Пример: cFrame.value.Position."
+      },
+      {
+        "term": "LookVector",
+        "code": "AURA-DICT-ROBLOX",
+        "message": "Разрешенное свойство извлечения вектора взгляда матрицы. Пример: cFrame.value.LookVector."
+      },
+      {
+        "term": "Magnitude",
+        "code": "AURA-DICT-ROBLOX",
+        "message": "Разрешенное свойство скалярной длины вектора расстояния. Пример: delta.Magnitude."
+      },
+      {
+        "term": "Unit",
+        "code": "AURA-DICT-ROBLOX",
+        "message": "Разрешенное свойство нормализованного единичного вектора направления."
+      },
+      {
+        "term": "Players",
+        "code": "AURA-DICT-ROBLOX",
+        "message": "Разрешенный нативный сервис игроков Roblox. Доступен только для считывания локального игрока."
+      },
+      {
+        "term": "LocalPlayer",
+        "code": "AURA-DICT-ROBLOX",
+        "message": "Разрешенное свойство сервиса Players для захвата сессии хоста."
+      },
+      {
+        "term": "math",
+        "code": "AURA-DICT-ROBLOX",
+        "message": "Глобальная библиотека математических примитивов среды Luau."
+      },
+      {
+        "term": "abs",
+        "code": "AURA-DICT-ROBLOX",
+        "message": "Разрешенный метод math.abs() для вычисления модуля осей координат."
+      }
+    ],
+    "runtime_context": [
+      {
+        "term": "min",
+        "code": "AURA-DICT-MATH",
+        "message": "Разрешенный метод math.min() для лимитирования максимальных скоростей."
+      },
+      {
+        "term": "max",
+        "code": "AURA-DICT-MATH",
+        "message": "Разрешенный метод math.max() для лимитирования кулдаунов таймеров оружия."
+      },
+      {
+        "term": "tick",
+        "code": "AURA-DICT-SYS",
+        "message": "Разрешенная системная функция tick() для получения времени сервера."
+      },
+      {
+        "term": "print",
+        "code": "AURA-DICT-SYS",
+        "message": "Разрешенный метод отладочного вывода print() в консоль Roblox Studio."
+      },
+      {
+        "term": "ctx",
+        "code": "AURA-DICT-CONTEXT",
+        "message": "Единственный легальный аргумент контекста ECS-мира Аура-8."
+      },
+      {
+        "term": "world",
+        "code": "AURA-DICT-CONTEXT",
+        "message": "Свойство контекста ctx.world для управления сущностями."
+      },
+      {
+        "term": "spawn",
+        "code": "AURA-DICT-CONTEXT",
+        "message": "Разрешенный метод ctx.world.spawn() для генерации сущности в ОЗУ."
+      },
+      {
+        "term": "despawn",
+        "code": "AURA-DICT-CONTEXT",
+        "message": "Разрешенный метод ctx.world.despawn() для очистки мусора из памяти."
+      },
+      {
+        "term": "remove",
+        "code": "AURA-DICT-CONTEXT",
+        "message": "Разрешенный метод ctx.world.remove() для очистки дельт компонентов из памяти мира."
+      }
+    ],
+    "allowed_components_and_tags": [
+      "ArchetypeComponent",
+      "VelocityComponent",
+      "CFrameComponent",
+      "WeaponStateComponent",
+      "HealthComponent",
+      "ExplosionTriggerComponent",
+      "DamageComponent",
+      "DamagePayloadComponent",
+      "PLAYER",
+      "ENEMY_INTERCEPTOR",
+      "PLASMA_BOLT",
+      "ALIENS",
+      "HUMANS",
+      "NEUTRAL"
+    ],
+ "allowed_variables_and_expressions": [
+      "inputEvents",
+      "VelocityUpdate",
+      "fireServer",
+      "getMovementInputVector",
+      "maxSpeed",
+      "type",
+      "faction",
+      "mass",
+      "angular",
+      "lastUpdated",
+      "radius",
+      "force",
+      "active",
+      "Value",
+      "FindFirstChild",
+      "Points",
+      "leaderstats",
+      "playerInstance",
+      "scoreObject",
+      "currentScore",
+      "uiTick",
+      "zero",
+      "entityId",
+      "targetEntityId",
+      "archetype",
+      "cFrame",
+      "velocity",
+      "weaponState",
+      "health",
+      "explosionTrigger",
+      "damage",
+      "damagePayload",
+      "targetArchetype",
+      "targetCFrame",
+      "targetVelocity",
+      "X",
+      "Y",
+      "Z",
+      "current",
+      "max",
+      "isInvulnerable",
+      "timeDecrement",
+      "nextCooldown",
+      "nextTimer",
+      "ammoCapacity",
+      "isCharging",
+      "randomX",
+      "playerPos",
+      "enemyPos",
+      "dirVector",
+      "aiSpeed",
+      "isBolt",
+      "as",
+      "unknown",
+      "strictTargetArchetype",
+      "strictTargetCFrame",
+      "calculatedVelocity",
+      "AURA_END"
+    ]
+  }
+}

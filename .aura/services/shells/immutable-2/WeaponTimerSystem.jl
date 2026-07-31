@@ -9,7 +9,7 @@ AuraShell(
         "flameworkPattern" => "MatterSystem",
         "className" => "WeaponTimerSystem",
         "methodName" => "updateWeaponCooldowns",
-        "context" => "Серверный апдейт кулдаунов и перезарядки турелей по стандарту v38.5"
+        "context" => "Serverny update cooldownov i perezaryadki tureley"
     ),
     
     perspectives = Dict(
@@ -19,33 +19,24 @@ AuraShell(
     
     render = function(ctx)
         Query(components = ["WeaponStateComponent", "ArchetypeComponent"]) do
-            Safety(limit = 2000); # Канон: Строго первой строкой с точкой с запятой
+            Safety(limit = 2000); 
             
-            # Гвард 1 (Early Return): Если оружие НЕ находится в состоянии зарядки/перезарядки — пропускаем итерацию
-            Guard(condition = "weaponState.isCharging === false");
-            
-            # Гвард 2 (Early Return): Если кулдаун УЖЕ завершен (<= 0) — пропускаем, обрабатывать нечего
-            Guard(condition = "weaponState.nextTimer <= 0");
-            
-            # Математический декрет времени (Ткач сгенерирует переменную weaponState в camelCase)
-            Calculate(var = "timeDecrement", expr = "deltaTime");
-            Calculate(var = "nextCooldown", expr = "math.max(0, weaponState.nextTimer - timeDecrement)");
-            
-            # Атомарно обновляем таймер в ОЗУ мира. Стрелочки только Джулии =>
-            Mutate(
-                component = "WeaponStateComponent", 
-                values = Dict(
-                    "nextTimer" => "nextCooldown", 
-                    "isCharging" => "nextCooldown > 0 ? true : false", # Если таймер еще тикает — остаемся в режиме зарядки
-                    "ammoCapacity" => "weaponState.ammoCapacity"
-                )
-            );
-            
-            # Гвард 3: Если таймер еще не дошел до нуля — выходим из итерации (остальное оружие еще перезаряжается)
-            Guard(condition = "nextCooldown > 0");
-            
-            # Сюда рантайм дойдет ТОЛЬКО в кадр, когдаnextCooldown стал равен 0 (перезарядка завершилась в эту секунду)
-            print("[Aura Weapon Grid] Перезарядка орудий завершена для сущности: ", entityId);
+            # 🔥 БЛOЧНЫЙ КАНOН: Каскад гвардов раскрывается через вложенные do-блоки
+            Guard(condition = "weaponState.isCharging === false") do
+                Guard(condition = "weaponState.nextTimer <= 0") do
+                    
+                    Calculate(var = "timeDecrement", expr = "deltaTime");
+                    Calculate(var = "nextCooldown", expr = "math.max(0, weaponState.nextTimer - timeDecrement)");
+                    
+                    Mutate(component = "WeaponStateComponent", values = Dict("nextTimer" => "nextCooldown", "isCharging" => "nextCooldown > 0 ? true : false", "ammoCapacity" => "weaponState.ammoCapacity"));
+                    
+                    Guard(condition = "nextCooldown > 0") do
+                        
+                        print("[Aura Weapon Grid] Weapon reload complete for entity: ", entityId);
+                        
+                    end
+                end
+            end
         end
     end
 )

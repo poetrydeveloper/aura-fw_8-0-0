@@ -11,7 +11,7 @@ AuraShell(
         "className" => "CollisionSystem",
         "methodName" => "checkCollisions",
         "uiTrigger" => "Heartbeat",
-        "context" => "Исправленный расчет пересечения пространственных векторов снарядов и перехватчиков по стандарту v38.5"
+        "context" => "Raschet vectorov stolknoveniy snaryadov i interceptorov"
     ),
     
     perspectives = Dict(
@@ -21,20 +21,23 @@ AuraShell(
     
     render = function(ctx)
         Query(components = ["ArchetypeComponent", "CFrameComponent", "DamageComponent"]) do
-            Safety(limit = 1000); # Канон: Точка с запятой на месте
+            Safety(limit = 1000); 
             
-            # Если это НЕ плазменный болт — мы пропускаем (система обрабатывает только летящие снаряды)
-            Guard(condition = "archetype.type === 'PLASMA_BOLT'"); # Инвертировано условие под канон Early Return
-            
-            NestedQuery(target = "ENEMY_INTERCEPTOR") do
-                # Вычисляем расстояние между снарядом (cFrame) и перехватчиком (targetCFrame)
-                Guard(condition = "cFrame.value.Position.sub(targetCFrame.value.Position).Magnitude < 4");
+            # 🔥 БЛOЧНЫЙ КАНOН: Каждая проверка открывает свой do-блок
+            Guard(condition = "archetype.type === 'PLASMA_BOLT'") do
                 
-                # Канон: targetEntityId перенесен внутрь словаря Dict, стрелочка Джулии =>
-                Mutate(component = "DamagePayloadComponent", values = Dict("value" => "damage.value", "targetEntityId" => "targetEntityId"));
+                NestedQuery(target = "ENEMY_INTERCEPTOR") do
+                    # Чистый, строго типизированный код без continue и без any
+                    Guard(condition = "targetArchetype.type === 'ENEMY_INTERCEPTOR'") do
+                        Guard(condition = "cFrame.value.Position.sub(targetCFrame.value.Position).Magnitude < 4") do
+                            
+                            Mutate(component = "DamagePayloadComponent", values = Dict("value" => "damage.value", "targetEntityId" => "targetEntityId"));
+                            ctx.world.despawn(entityId);
+                            
+                        end
+                    end
+                end
                 
-                # Мгновенно стираем снаряд из мира, чтобы он не пробил 5 врагов насквозь за один тик
-                ctx.world.despawn(entityId);
             end
         end
     end

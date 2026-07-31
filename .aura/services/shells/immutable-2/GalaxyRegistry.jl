@@ -9,21 +9,16 @@ AuraShell(
         "executionSide" => "Shared",
         "flameworkPattern" => "GlobalConstants",
         "className" => "GalaxyRegistry",
-        "context" => "Глобальный реестр строковых констант, фракций и тегов игры Galaxy по стандарту v38.5"
+        "context" => "Globalny reestr strogovih konstant fractiy i tegov"
     ),
     
-    render = function(ctx)
-        Registry(
-            Identifiers = [
-                "ENEMY_INTERCEPTOR",
-                "PLAYER", # Исправлено под сквозной стандарт 'PLAYER' во всех гвардах систем
-                "PLASMA_BOLT"
-            ],
-            Factions = [
-                "ALIENS",
-                "HUMANS",
-                "NEUTRAL"
-            ]
-        ); # Канон: Вызов закрыт точкой с запятой
-    end
+    perspectives = Dict(
+        "semanticSvo" => Dict("subject" => "GalaxyRegistry", "action" => "Defines", "object" => "Identifiers")
+    ),
+    
+    # 🔥 КАНOН ДЖУЛИА ДЛЯ ТКАЧА: Никаких 'function' и 'end'. Только чистый dataflow-контракт констант!
+    render = (ctx) -> (
+        Calculate(var = "Identifiers", expr = "['ENEMY_INTERCEPTOR', 'PLAYER', 'PLASMA_BOLT'] as const");
+        Calculate(var = "Factions", expr = "['ALIENS', 'HUMANS', 'NEUTRAL'] as const");
+    )
 )
