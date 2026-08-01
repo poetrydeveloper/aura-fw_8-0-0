@@ -20,7 +20,7 @@ export class CodeWeaver {
     }
 
     public async weaveProject(): Promise<void> {
-        console.log("=== RUNNING AURA ATOMIC STREAM WEAVER v38.9 (JULIA CONTOUR) ===");
+        console.log("=== RUNNING AURA ATOMIC STREAM WEAVER v47.0 (JULIA CONTOUR) ===");
         const session: Session = this.driver.session();
         const validationProject = new Project({ useInMemoryFileSystem: true });
         const mapProjectData: Record<string, string[]> = {};
@@ -79,29 +79,26 @@ export class CodeWeaver {
             const classBuckets = new Map<string, { pattern: string; shells: any[] }>();
             result.records
                 .filter(r => {
-                    // 🔥 ФИКС БЛОКА 2: Исключаем только компоненты и глобальные константы.
-                    // Абсолютно ВСЕ остальные ракушки систем логики (вне зависимости от имени Flamework паттерна)
-                    // ОБЯЗАНЫ проходить через токенайзер, исключая пролаз сырого кода Julia в файлы TypeScript!
                     const p = r.get('pattern');
-                    return p !== 'Component' && p !== 'GlobalConstants';
+                    const cName = r.get('className');
+                    // 🔥 СТРОГИЙ КАНOН: Если у ноды в базе данных нет имени класса или паттерна - 
+                    // мы её ХЛАДНОКРОВНО ИГНОРИРУЕМ и не пускаем калечить диск хоста!
+                    return p !== 'Component' && p !== 'GlobalConstants' && cName && cName !== 'undefined' && cName !== 'null';
                 })
                 .forEach(r => {
-                    const cName = r.get('className') || "MovementSystem";
+                    const cName = String(r.get('className'));
                     if (!classBuckets.has(cName)) classBuckets.set(cName, { pattern: r.get('pattern') || "MatterSystem", shells: [] });
                     classBuckets.get(cName)!.shells.push(r);
                 });
 
             for (const [className, bucket] of classBuckets.entries()) {
                 const targetRelPath = bucket.shells[0].get('rojoTarget') || `src/server/systems/${className}.ts`;
-                
-                // Виртуальный путь в памяти ts-morph для безопасной компиляции линкера
                 const virtualPath = targetRelPath;
                 
                 // Вшиваем модульный LEGO-заголовок
                 let fileContent = `${globalMocksHeader}\n`;
                 
-                // 🔥 ГЛАВНЫЙ ФИКС ХАРДКОДА: Импортируем ВЕСЬ неймспейс констант через звездочку (*).
-                // Это на 100% убирает мины опечаток регистров и делает импорт всеядным для любых новых констант ИИ!
+                // ГЛАВНЫЙ ФИКС ХАРДКОДА: Импортируем ВЕСЬ неймспейс констант через звездочку (*).
                 fileContent += `import * as Constants from "../../shared/constants";\n\n`;
                 fileContent += `export class ${className} {\n    constructor() {}\n\n`;
 
@@ -109,10 +106,12 @@ export class CodeWeaver {
                     const mName = record.get('methodName') || "update";
                     const params = bucket.pattern === "MatterSystem" ? ['ctx: AuraContext', 'deltaTime: number'] : ['ctx: AuraContext'];
                     
-                    // Посимвольный токенайзер Джулии v38.9
+                    // Посимвольный токенайзер Джулии v47.0 (Прямой проброс из Docker!)
                     const rawBody = translateJuliaToTs(record.get('astJson') || "", className, mName);
-                    // Санитарный линтер-адаптер под rbxtsc
-                    const fixedBody = applyRobloxStrictFixes(rawBody);
+                    
+                    // 🔥 ИСПРАВЛЕНИЕ КАНОНА: Мы больше НЕ КAЛЕЧИМ код регулярками хоста!
+                    // Опасная функция applyRobloxStrictFixes вырезана из контура деплоя на хост Windows.
+                    const fixedBody = rawBody;
                     
                     fileContent += `    public ${mName}(${params.join(', ')}): ${record.get('outputType') || 'void'} ${fixedBody}\n\n`;
                     if (record.get('id')) { 
@@ -141,7 +140,7 @@ export class CodeWeaver {
             // Сбрасываем карту проекта для фронтенд-интерфейса
             await fs.ensureDir(MAP_PROJECT_DIR);
             await fs.writeJson(path.join(MAP_PROJECT_DIR, 'map_project.json'), mapProjectData, { spaces: 4 });
-            console.log("=== ЦИКЛ СБОРКИ СЕТИ AURA v38.9 УСПЕШНО ЗАВЕРШЕН ===");
+            console.log("=== ЦИКЛ СБОРКИ СЕТИ AURA v47.0 УСПЕШНО ЗАВЕРШЕН ===");
             
         } catch (error: any) { 
             console.error("❌ ФАТАЛЬНЫЙ СБОЙ ТКАЧА:", error.message); 

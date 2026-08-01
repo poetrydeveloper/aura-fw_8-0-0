@@ -1,6 +1,6 @@
 {
-    "src/shared/components.types.ts": [
-        "GalaxyArchetype_v38_5"
+    "src/shared/constants.ts": [
+        "registry_galaxy_constants_v38_5"
     ],
     "src/server/systems/CleanerSystem.ts": [
         "ecs_galaxy_cleaner_v38_5"
@@ -19,9 +19,6 @@
     ],
     "src/server/systems/ExplosionSystem.ts": [
         "ecs_galaxy_explosion_v38_5"
-    ],
-    "src/server/systems/GalaxyRegistry.ts": [
-        "registry_galaxy_constants_v38_5"
     ],
     "src/server/systems/GameOverSystem.ts": [
         "ecs_galaxy_game_over_v38_5"

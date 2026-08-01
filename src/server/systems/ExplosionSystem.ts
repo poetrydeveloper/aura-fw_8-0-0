@@ -63,20 +63,20 @@ import * as Constants from "../../shared/constants";
 export class ExplosionSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void
+    public emitParticles(ctx: AuraContext, deltaTime: number): void {
+        for (const [entityId, [archetype, cFrame, health]] of ctx.world.query("ArchetypeComponent", "CFrameComponent", "HealthComponent") as unknown as Map<number, [ArchetypeComponent, CFrameComponent, HealthComponent]>) {
+            const auraGlobalRegistry = globalThis as unknown as Record<string, number>;
+            if (auraGlobalRegistry["safetyCounter"] === undefined) { auraGlobalRegistry["safetyCounter"] = 0; }
+            if (++auraGlobalRegistry["safetyCounter"] > 100) { auraGlobalRegistry["safetyCounter"] = 0; warn("Aura Safety Triggered"); break; }
+
+            if (archetype.type === 'ENEMY_INTERCEPTOR') {
 
 
-    for(const [entityId, [archetype, cFrame, health]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent, HealthComponent]>) {
-    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-    if (++(globalThis as any).safetyCounter > 100) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
-
-    if (archetype.type === 'ENEMY_INTERCEPTOR') {
 
 
-
-
+            }
+        }
     }
-}
         )
 
 

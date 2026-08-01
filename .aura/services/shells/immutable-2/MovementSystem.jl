@@ -42,7 +42,12 @@ AuraShell(
             Calculate(var = "logSpeed", expr = "currentVelocity.Magnitude > 100 ? print('[AURA Physics] High speed detected for entity:', entityId) : undefined");
             #END_CONTENT_03805_00002#
             
+            # Honest mirror end statement for nested Guard_if block 00002
+            end
             #END_CONTENT_03805_00001#
+            
+            # Honest mirror end statement for root Guard_if block 00001
+            end
         end
     end
 )

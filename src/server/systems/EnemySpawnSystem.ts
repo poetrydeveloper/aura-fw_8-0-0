@@ -63,17 +63,16 @@ import * as Constants from "../../shared/constants";
 export class EnemySpawnSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void
+    public spawnWaves(ctx: AuraContext, deltaTime: number): void {
+        const randomX = math.min(500, math.max(-500, 200));
 
-
-    const randomX = math.min(500, math.max(-500, 200));
-
-    if(math.abs(randomX) >= 1000) {
+        if (math.abs(randomX) >= 1000) {
 
 
 
 
-}
+        }
+    }
         )
 
 

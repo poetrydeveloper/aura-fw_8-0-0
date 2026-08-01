@@ -8,7 +8,7 @@ AuraComponentPassport(
     rojoTarget = "src/shared/components.types.ts",
     context = "Polny semanticheskiy pasport komponentov Matter ECS dlya kosmicheskogo simulatora",
     
-    # Спецификация компонентов (Плоская структура, без фигурных скобок!)
+    # Component specification (Flat structure)
     components = Dict(
         "ArchetypeComponent" => Dict(
             "type" => "string",
@@ -48,6 +48,4 @@ AuraComponentPassport(
     )
 )
 
-# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraComponentPassport!
-# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
 # AURA_END

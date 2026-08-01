@@ -63,21 +63,23 @@ import * as Constants from "../../shared/constants";
 export class HealthSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void
+    public updateHealth(ctx: AuraContext, deltaTime: number): void {
+        for (const [entityId, [health, damagePayload]] of ctx.world.query("HealthComponent", "DamagePayloadComponent") as unknown as Map<number, [HealthComponent, DamagePayloadComponent]>) {
+            const auraGlobalRegistry = globalThis as unknown as Record<string, number>;
+            if (auraGlobalRegistry["safetyCounter"] === undefined) { auraGlobalRegistry["safetyCounter"] = 0; }
+            if (++auraGlobalRegistry["safetyCounter"] > 2000) { auraGlobalRegistry["safetyCounter"] = 0; warn("Aura Safety Triggered"); break; }
 
-
-    for(const [entityId, [health, damagePayload]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [HealthComponent, DamagePayloadComponent]>) {
-    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-    if (++(globalThis as any).safetyCounter > 2000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
-
-    if (health.isInvulnerable === true) {
-
-
+            if (health.isInvulnerable === true) {
 
 
 
 
 
+
+
+            }
+
+        }
     }
 }
         )

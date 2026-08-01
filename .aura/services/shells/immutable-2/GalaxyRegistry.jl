@@ -16,13 +16,11 @@ AuraShell(
         "semanticSvo" => Dict("subject" => "GalaxyRegistry", "action" => "Defines", "object" => "Identifiers")
     ),
     
-    # 🔥 КАНOН ДЖУЛИА ДЛЯ ТКАЧА: Никаких 'function' и 'end'. Только чистый dataflow-контракт констант!
+    # Pure dataflow constants contract (no functions or nested end tokens)
     render = (ctx) -> (
         Calculate(var = "Identifiers", expr = "['ENEMY_INTERCEPTOR', 'PLAYER', 'PLASMA_BOLT'] as const");
         Calculate(var = "Factions", expr = "['ALIENS', 'HUMANS', 'NEUTRAL'] as const");
     )
 )
 
-# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
-# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
 # AURA_END

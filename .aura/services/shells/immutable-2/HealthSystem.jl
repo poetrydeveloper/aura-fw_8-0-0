@@ -23,11 +23,11 @@ AuraShell(
         Query(components = ["HealthComponent", "DamagePayloadComponent"]) do
             Safety(limit = 2000); 
             
-            # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Корневой декларативный слот
+            # Root assignment slot
             Guard_if(condition = "health.isInvulnerable === true", slot = "03805_00001");
             
             # =========================================================================
-            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # MATRICA NAPOLNENIYA
             # =========================================================================
             
             #START_CONTENT_03805_00001#
@@ -39,7 +39,7 @@ AuraShell(
             
             ctx.world.remove(entityId, "DamagePayloadComponent");
             
-            # Вложенный декларативный слот для фиксации смертельного исхода
+            # Nested declarative slot for death verification
             Guard_if(condition = "nextHp > 0", slot = "03805_00002");
             
             #START_CONTENT_03805_00002#
@@ -47,11 +47,14 @@ AuraShell(
             print("[Aura Health] Entity destroyed. Current health is zero for entity: ", entityId);
             #END_CONTENT_03805_00002#
             
+            # Honest mirror end statement for nested Guard_if block
+            end
             #END_CONTENT_03805_00001#
+            
+            # Honest mirror end statement for root Guard_if block
+            end
         end
     end
 )
 
-# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
-# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
 # AURA_END

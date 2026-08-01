@@ -63,19 +63,20 @@ import * as Constants from "../../shared/constants";
 export class CleanerSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void
+    public cleanOutOfBounds(ctx: AuraContext, deltaTime: number): void {
+        for (const [entityId, [cFrame, archetype]] of ctx.world.query("CFrameComponent", "ArchetypeComponent") as unknown as Map<number, [CFrameComponent, ArchetypeComponent]>) {
+            const auraGlobalRegistry = globalThis as unknown as Record<string, number>;
+            if (auraGlobalRegistry["safetyCounter"] === undefined) { auraGlobalRegistry["safetyCounter"] = 0; }
+            if (++auraGlobalRegistry["safetyCounter"] > 500) { auraGlobalRegistry["safetyCounter"] = 0; warn("Aura Safety Triggered"); break; }
 
-
-    for(const [entityId, [cFrame, archetype]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [CFrameComponent, ArchetypeComponent]>) {
-    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-    if (++(globalThis as any).safetyCounter > 500) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
-
-    if (archetype.type === 'STATIONARY_OBJECT') {
-
+            if (archetype.type === 'STATIONARY_OBJECT') {
 
 
 
 
+            }
+
+        }
     }
 }
         )

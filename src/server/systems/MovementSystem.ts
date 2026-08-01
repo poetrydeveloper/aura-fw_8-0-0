@@ -63,18 +63,20 @@ import * as Constants from "../../shared/constants";
 export class MovementSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void
+    public updateMovement(ctx: AuraContext, deltaTime: number): void {
+        for (const [entityId, [velocity, cFrame, archetype]] of ctx.world.query("VelocityComponent", "CFrameComponent", "ArchetypeComponent") as unknown as Map<number, [VelocityComponent, CFrameComponent, ArchetypeComponent]>) {
+            const auraGlobalRegistry = globalThis as unknown as Record<string, number>;
+            if (auraGlobalRegistry["safetyCounter"] === undefined) { auraGlobalRegistry["safetyCounter"] = 0; }
+            if (++auraGlobalRegistry["safetyCounter"] > 5000) { auraGlobalRegistry["safetyCounter"] = 0; warn("Aura Safety Triggered"); break; }
+
+            if (deltaTime <= 0) {
 
 
-    for(const [entityId, [velocity, cFrame, archetype]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [VelocityComponent, CFrameComponent, ArchetypeComponent]>) {
-    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-    if (++(globalThis as any).safetyCounter > 5000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
-
-    if (deltaTime <= 0) {
 
 
+            }
 
-
+        }
     }
 }
         )

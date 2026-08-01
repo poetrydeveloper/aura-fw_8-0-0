@@ -63,20 +63,24 @@ import * as Constants from "../../shared/constants";
 export class WeaponTimerSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void
+    public updateWeaponCooldowns(ctx: AuraContext, deltaTime: number): void {
+        for (const [entityId, [weaponState, archetype]] of ctx.world.query("WeaponStateComponent", "ArchetypeComponent") as unknown as Map<number, [WeaponStateComponent, ArchetypeComponent]>) {
+            const auraGlobalRegistry = globalThis as unknown as Record<string, number>;
+            if (auraGlobalRegistry["safetyCounter"] === undefined) { auraGlobalRegistry["safetyCounter"] = 0; }
+            if (++auraGlobalRegistry["safetyCounter"] > 2000) { auraGlobalRegistry["safetyCounter"] = 0; warn("Aura Safety Triggered"); break; }
+
+            if (weaponState.isCharging === false) {
 
 
-    for(const [entityId, [weaponState, archetype]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [WeaponStateComponent, ArchetypeComponent]>) {
-    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-    if (++(globalThis as any).safetyCounter > 2000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
-
-    if (weaponState.isCharging === false) {
 
 
+            }
 
+        }
 
     }
 }
+        }
         )
 
 

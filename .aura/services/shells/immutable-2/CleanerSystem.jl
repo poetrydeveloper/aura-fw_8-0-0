@@ -22,11 +22,11 @@ AuraShell(
         Query(components = ["CFrameComponent", "ArchetypeComponent"]) do
             Safety(limit = 500); 
             
-            # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Декларативные слоты-мишени
+            # Root assignment slot
             Guard_if(condition = "archetype.type === 'STATIONARY_OBJECT'", slot = "03805_00001");
             
             # =========================================================================
-            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # MATRICA NAPOLNENIYA
             # =========================================================================
             
             #START_CONTENT_03805_00001#
@@ -40,13 +40,14 @@ AuraShell(
             print("[Aura Garbage Collector] Entity removed out of bounds: ", entityId);
             #END_CONTENT_03805_00003#
             
+            # Chestnye zerkalnye end dlya kazhdogo vlozhennogo Guard_if!
+            end
             #END_CONTENT_03805_00002#
-            #END_CONTENT_03805_00001#
             
+            end
+            #END_CONTENT_03805_00001#
         end
     end
 )
 
-# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
-# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
 # AURA_END

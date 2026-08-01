@@ -23,11 +23,11 @@ AuraShell(
         Query(components = ["ArchetypeComponent", "HealthComponent", "DamagePayloadComponent"]) do
             Safety(limit = 1000); 
             
-            # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Корневой декларативный слот
+            # Root assignment slot
             Guard_if(condition = "archetype.type === 'ENEMY_INTERCEPTOR'", slot = "03805_00001");
             
             # =========================================================================
-            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # MATRICA NAPOLNENIYA
             # =========================================================================
             
             #START_CONTENT_03805_00001#
@@ -37,11 +37,14 @@ AuraShell(
             print("[Aura Progress] Enemy destroyed. Reward experience added for entity: ", entityId);
             #END_CONTENT_03805_00002#
             
+            # Honest mirror end statement for nested Guard_if block 00002
+            end
             #END_CONTENT_03805_00001#
+            
+            # Honest mirror end statement for root Guard_if block 00001
+            end
         end
     end
 )
 
-# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
-# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
 # AURA_END

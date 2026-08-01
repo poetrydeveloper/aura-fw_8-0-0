@@ -63,22 +63,24 @@ import * as Constants from "../../shared/constants";
 export class CollisionSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void
+    public checkCollisions(ctx: AuraContext, deltaTime: number): void {
+        for (const [entityId, [archetype, cFrame, damage]] of ctx.world.query("ArchetypeComponent", "CFrameComponent", "DamageComponent") as unknown as Map<number, [ArchetypeComponent, CFrameComponent, DamageComponent]>) {
+            const auraGlobalRegistry = globalThis as unknown as Record<string, number>;
+            if (auraGlobalRegistry["safetyCounter"] === undefined) { auraGlobalRegistry["safetyCounter"] = 0; }
+            if (++auraGlobalRegistry["safetyCounter"] > 1000) { auraGlobalRegistry["safetyCounter"] = 0; warn("Aura Safety Triggered"); break; }
+
+            if (archetype.type === 'PLASMA_BOLT') {
 
 
-    for(const [entityId, [archetype, cFrame, damage]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent, DamageComponent]>) {
-    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-    if (++(globalThis as any).safetyCounter > 1000) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
-
-    if (archetype.type === 'PLASMA_BOLT') {
 
 
 
+            }
+
+        }
 
     }
-
 }
-        }
         )
 
 

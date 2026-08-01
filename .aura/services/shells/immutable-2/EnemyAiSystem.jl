@@ -23,34 +23,38 @@ AuraShell(
         Query(components = ["ArchetypeComponent", "CFrameComponent"]) do
             Safety(limit = 10); 
             
-            # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Декларативный корневой слот
+            # Root declarative slot assignment
             Guard_if(condition = "archetype.type === 'PLAYER'", slot = "03805_00001");
             
             # =========================================================================
-            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # MATRICA NAPOLNENIYA
             # =========================================================================
             
             #START_CONTENT_03805_00001#
             Calculate(var = "playerPos", expr = "cFrame.value.Position");
             
-            NestedQuery(target = "ENEMY_INTERCEPTOR") do
-                # Нативный внутренний if для проверки захваченного таргета
-                if targetArchetype.type === "ENEMY_INTERCEPTOR"
-                    Calculate(var = "enemyPos", expr = "targetCFrame.value.Position");
-                    
-                    Calculate(var = "dirVector", expr = "playerPos.sub(enemyPos).Magnitude > 0 ? playerPos.sub(enemyPos).Unit : new Vector3(0, 0, 0)");
-                    Calculate(var = "aiSpeed", expr = "25");
-                    Calculate(var = "calculatedVelocity", expr = "dirVector.mul(aiSpeed)");
-                    
-                    Mutate(component = "VelocityComponent", values = Dict("value" => "calculatedVelocity", "targetEntityId" => "targetEntityId"));
-                end
-            end
-            #END_CONTENT_03805_00001#
+            # NEW MODULAR LOOP MACRO: Generates sterile TypeScript header for...of
+            Guard_for_of(target = "ENEMY_INTERCEPTOR", slot = "03805_00002");
             
+            #START_CONTENT_03805_00002#
+            Guard_if(condition = "isAuraTargetValid", slot = "03805_00003");
+            
+            #START_CONTENT_03805_00003#
+            Calculate(var = "enemyPos", expr = "targetCFrame.value.Position");
+            Calculate(var = "dirVector", expr = "playerPos.sub(enemyPos).Magnitude > 0 ? playerPos.sub(enemyPos).Unit : new Vector3(0, 0, 0)");
+            Calculate(var = "aiSpeed", expr = "25");
+            Calculate(var = "calculatedVelocity", expr = "dirVector.mul(aiSpeed)");
+            
+            Mutate(component = "VelocityComponent", values = Dict("value" => "calculatedVelocity", "targetEntityId" => "targetEntityId"));
+            #END_CONTENT_03805_00003#
+            
+            # Honest mirror end statement for Guard_for_of block
+            end
+            #END_CONTENT_03805_00002#
+            
+            #END_CONTENT_03805_00001#
         end
     end
 )
 
-# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
-# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
 # AURA_END

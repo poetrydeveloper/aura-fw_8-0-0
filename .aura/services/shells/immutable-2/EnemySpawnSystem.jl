@@ -22,11 +22,11 @@ AuraShell(
     render = function(ctx)
         Calculate(var = "randomX", expr = "math.min(500, math.max(-500, 200))");
         
-        # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v42.0: Корневой декларативный слот
+        # Matrix root slot assignment
         Guard_if(condition = "math.abs(randomX) >= 1000", slot = "03805_00001");
         
         # =========================================================================
-        # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+        # MATRICA NAPOLNENIYA
         # =========================================================================
         
         #START_CONTENT_03805_00001#
@@ -37,10 +37,10 @@ AuraShell(
         print("[Aura Spawner] Entity spawned at position X: ", randomX);
         #END_CONTENT_03805_00002#
         
+        # Chestnye zerkalnye end dlya kazhdogo vlozhennogo Guard_if!
+        end
         #END_CONTENT_03805_00001#
     end
 )
 
-# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
-# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
 # AURA_END

@@ -63,22 +63,22 @@ import * as Constants from "../../shared/constants";
 export class EnemyAiSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void
+    public updateAi(ctx: AuraContext, deltaTime: number): void {
+        for (const [entityId, [archetype, cFrame]] of ctx.world.query("ArchetypeComponent", "CFrameComponent") as unknown as Map<number, [ArchetypeComponent, CFrameComponent]>) {
+            const auraGlobalRegistry = globalThis as unknown as Record<string, number>;
+            if (auraGlobalRegistry["safetyCounter"] === undefined) { auraGlobalRegistry["safetyCounter"] = 0; }
+            if (++auraGlobalRegistry["safetyCounter"] > 10) { auraGlobalRegistry["safetyCounter"] = 0; warn("Aura Safety Triggered"); break; }
 
-
-    for(const [entityId, [archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown)) as unknown as Map<number, [ArchetypeComponent, CFrameComponent]>) {
-    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-    if (++(globalThis as any).safetyCounter > 10) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
-
-    if (archetype.type === 'PLAYER') {
-
+            if (archetype.type === 'PLAYER') {
 
 
 
 
 
+            }
+
+        }
     }
-}
         )
 
 

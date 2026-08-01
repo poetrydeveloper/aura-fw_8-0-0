@@ -63,20 +63,24 @@ import * as Constants from "../../shared/constants";
 export class InputSystem {
     constructor() { }
 
-    public update(ctx: AuraContext, deltaTime: number): void
+    public handleInput(ctx: AuraContext): void {
+        for (const [entityId, [velocity, archetype, cFrame]] of ctx.world.query("VelocityComponent", "ArchetypeComponent", "CFrameComponent") as unknown as Map<number, [VelocityComponent, ArchetypeComponent, CFrameComponent]>) {
+            const auraGlobalRegistry = globalThis as unknown as Record<string, number>;
+            if (auraGlobalRegistry["safetyCounter"] === undefined) { auraGlobalRegistry["safetyCounter"] = 0; }
+            if (++auraGlobalRegistry["safetyCounter"] > 100) { auraGlobalRegistry["safetyCounter"] = 0; warn("Aura Safety Triggered"); break; }
+
+            if (archetype.type !== 'PLAYER') {
 
 
-    for(const [entityId, [velocity, archetype, cFrame]] of ctx.world.query(({} as unknown), ({} as unknown), ({} as unknown)) as unknown as Map<number, [VelocityComponent, ArchetypeComponent, CFrameComponent]>) {
-    if (typeof (globalThis as any).safetyCounter === "undefined") { (globalThis as any).safetyCounter = 0; }
-    if (++(globalThis as any).safetyCounter > 100) { (globalThis as any).safetyCounter = 0; warn("Aura Safety Triggered"); break; }
-
-    if (archetype.type !== 'PLAYER') {
 
 
+            }
 
+        }
 
     }
 }
+        }
         )
 
 

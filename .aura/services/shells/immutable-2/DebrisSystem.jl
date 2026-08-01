@@ -24,17 +24,17 @@ AuraShell(
             Safety(limit = 1000);
             
             if archetype.type === "PLASMA_BOLT"
-                # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v41.0: Изолированный слот для снарядов
+                # Isolated slot assignment for plasma bolts
                 Guard_if(condition = "math.abs(cFrame.value.Position.X) > 2000", slot = "03805_00001");
             end
             
             if archetype.type === "ENEMY_INTERCEPTOR"
-                # 🪐 КВАНТОВЫЙ МАТРИЧНЫЙ КАНOН v41.0: Изолированный слот для врагов
+                # Isolated slot assignment for interceptors
                 Guard_if(condition = "math.abs(cFrame.value.Position.X) > 3000", slot = "03805_00002");
             end
             
             # =========================================================================
-            # 🛰️ МАТРИЦА НАПОЛНЕНИЯ (Изолированные капсулы контента)
+            # MATRICA NAPOLNENIYA
             # =========================================================================
             
             #START_CONTENT_03805_00001#
@@ -51,6 +51,4 @@ AuraShell(
     end
 )
 
-# 🔥 АБСОЛЮТНЫЙ КАНOН v42.0: Токен стоит ЗА пределами структуры AuraShell!
-# Он служит чистым стоп-краном и больше БЕЗДУМНО НЕ ПЛОДИТ призрачных скобок!
 # AURA_END
